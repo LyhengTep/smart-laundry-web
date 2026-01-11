@@ -1,373 +1,224 @@
+import Link from "next/link";
+
 export default function Home() {
+  // Demo Data (In a real app, this comes from your database/ERD)
+  const shops = [
+    {
+      name: "Bubbles & Suds",
+      address: "123 University Ave, Campus North",
+      rating: 4.8,
+      status: "OPEN" as const,
+      distance: "0.8km",
+      image:
+        "https://images.unsplash.com/photo-1545173168-9f1947e8017e?q=80&w=600",
+    },
+    {
+      name: "Eco-Clean Hub",
+      address: "45 Station Road",
+      rating: 4.5,
+      status: "CLOSED" as const,
+      distance: "1.2km",
+      image:
+        "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=600",
+    },
+    {
+      name: "Prime Press",
+      address: "West Campus Gate",
+      rating: 4.9,
+      status: "OPEN" as const,
+      distance: "0.5km",
+      image:
+        "https://images.unsplash.com/photo-1489274495744-85ff17e7ad6d?q=80&w=600",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-slate-900">
-      {/* background glow */}
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute left-[10%] top-[-10%] h-[520px] w-[900px] rounded-full bg-blue-600/15 blur-3xl" />
-        <div className="absolute right-[0%] top-[0%] h-[520px] w-[900px] rounded-full bg-sky-500/15 blur-3xl" />
-        <div className="absolute left-[45%] bottom-[-20%] h-[620px] w-[900px] rounded-full bg-green-600/10 blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <Navbar />
 
-      <div className="mx-auto max-w-[1160px] px-5 py-6">
-        {/* Nav */}
-        <header className="sticky top-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-[26px] border border-slate-900/10 bg-white/70 px-4 py-3 shadow-[0_10px_22px_rgba(2,6,23,.08)] backdrop-blur">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-[14px] bg-gradient-to-br from-blue-600 to-sky-500 shadow-[0_10px_20px_rgba(37,99,235,.20)]" />
-            <div className="leading-tight">
-              <div className="text-sm font-semibold">Smart Laundry System</div>
-              <div className="text-xs text-slate-500">Web app — Home page</div>
-            </div>
+      {/* Hero Section */}
+      <header className="bg-white pt-12 pb-20 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight">
+            Laundry Day, <span className="text-blue-600">Simplified.</span>
+          </h1>
+          <p className="text-lg text-slate-600 mb-10 max-w-2xl mx-auto">
+            Choose from the best shops on campus. High-quality cleaning,
+            automated tracking.
+          </p>
+
+          {/* Tracking Search */}
+          <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-2 border border-slate-100 flex flex-col md:flex-row gap-2">
+            <input
+              type="text"
+              placeholder="Track Order ID (e.g., ORD-123)..."
+              className="flex-1 px-6 py-4 focus:outline-none text-slate-700 bg-slate-50 rounded-xl"
+            />
+            <button className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100">
+              Find My Order
+            </button>
           </div>
+        </div>
+      </header>
 
-          <nav className="flex flex-wrap items-center gap-2">
-            <a
-              className="rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-900/5 hover:text-slate-900"
-              href="#features"
-            >
-              Features
-            </a>
-            <a
-              className="rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-900/5 hover:text-slate-900"
-              href="#roles"
-            >
-              Roles
-            </a>
-            <a
-              className="rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-900/5 hover:text-slate-900"
-              href="#shops"
-            >
-              Shops
-            </a>
+      {/* Shop Browser Section */}
+      <section id="shops" className="max-w-7xl mx-auto px-4 py-16">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900">
+              Recommended Shops
+            </h2>
+            <p className="text-slate-500">
+              Based on your location and top ratings
+            </p>
+          </div>
+          <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+              All
+            </button>
+            <button className="text-slate-500 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 transition">
+              Open Now
+            </button>
+          </div>
+        </div>
 
-            <button className="rounded-[14px] border border-slate-900/10 bg-white/85 px-3 py-2 text-sm shadow-sm hover:-translate-y-[1px] hover:shadow-md transition">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {shops.map((shop, index) => (
+            <ShopCard key={index} {...shop} />
+          ))}
+        </div>
+      </section>
+
+      {/* Business Owner CTA */}
+      <section className="max-w-7xl mx-auto px-4 pb-20">
+        <div className="bg-blue-600 rounded-[3rem] p-12 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+          <div className="text-white">
+            <h2 className="text-3xl font-bold mb-2 tracking-tight">
+              Own a Laundry Business?
+            </h2>
+            <p className="text-blue-100 opacity-90">
+              Manage your orders and reach more students today.
+            </p>
+          </div>
+          <button className="bg-white text-blue-600 px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 transition shadow-2xl">
+            Register Shop
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+interface ShopProps {
+  name: string;
+  address: string;
+  rating: number;
+  status: "OPEN" | "CLOSED";
+  distance: string;
+  image: string;
+}
+
+function ShopCard({
+  name,
+  address,
+  rating,
+  status,
+  distance,
+  image,
+}: ShopProps) {
+  const isOpen = status === "OPEN";
+
+  return (
+    <div
+      className={`bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col ${
+        !isOpen && "opacity-80"
+      }`}
+    >
+      <div className="relative h-48">
+        <img
+          src={image}
+          className={`w-full h-full object-cover ${!isOpen && "grayscale"}`}
+          alt={name}
+        />
+        <span className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-blue-600 shadow-sm">
+          {distance} away
+        </span>
+        <span
+          className={`absolute top-4 right-4 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider ${
+            isOpen ? "bg-green-500" : "bg-slate-500"
+          }`}
+        >
+          {status}
+        </span>
+      </div>
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-xl font-bold text-slate-800">{name}</h3>
+          <div className="flex items-center gap-1 text-amber-500 font-bold">
+            <span className="text-sm">★ {rating}</span>
+          </div>
+        </div>
+        <p className="text-slate-500 text-sm mb-6 line-clamp-1">{address}</p>
+
+        <button
+          disabled={!isOpen}
+          className={`w-full py-3 font-bold rounded-2xl transition-all ${
+            isOpen
+              ? "bg-slate-900 text-white hover:bg-blue-600"
+              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          }`}
+        >
+          {isOpen ? "Book Laundry" : "Check Back Later"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Navbar() {
+  return (
+    <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-lg text-white">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
+              </svg>
+            </div>
+            <span className="text-xl font-bold text-slate-800 tracking-tight">
+              SmartWash
+            </span>
+          </Link>
+          <div className="hidden md:flex space-x-8 text-slate-600 font-medium">
+            <Link href="#shops" className="hover:text-blue-600 transition">
+              Browse Shops
+            </Link>
+            <Link href="/orders" className="hover:text-blue-600 transition">
+              My Orders
+            </Link>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="text-slate-600 font-medium hover:text-blue-600 transition">
               Login
             </button>
-            <button className="rounded-[14px] border border-blue-700/30 bg-gradient-to-br from-blue-600 to-sky-500 px-3 py-2 text-sm font-medium text-white shadow-sm hover:-translate-y-[1px] hover:shadow-md transition">
-              Create order
-            </button>
-          </nav>
-        </header>
-
-        {/* Hero */}
-        <section className="mt-4 overflow-hidden rounded-[26px] border border-slate-900/10 bg-white/70 shadow-[0_18px_55px_rgba(2,6,23,.12)]">
-          <div className="grid gap-5 p-6 lg:grid-cols-[1.15fr_.85fr]">
-            {/* Left */}
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-900/10 bg-white/70 px-3 py-2 text-xs text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-green-600" />
-                Fast ordering • Live tracking • Pickup & delivery
-              </div>
-
-              <h1 className="mt-3 text-[38px] font-semibold leading-[1.08] tracking-[-0.6px]">
-                Clean clothes, without the hassle.
-              </h1>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Find nearby laundry shops, place an order in minutes, and track
-                status from pickup to delivery. Built for customers, laundry
-                businesses, drivers, and admins.
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button className="rounded-[14px] border border-blue-700/30 bg-gradient-to-br from-blue-600 to-sky-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:-translate-y-[1px] hover:shadow-md transition">
-                  Start an order
-                </button>
-                <a
-                  href="#shops"
-                  className="rounded-[14px] border border-slate-900/10 bg-white/85 px-4 py-2 text-sm shadow-sm hover:-translate-y-[1px] hover:shadow-md transition"
-                >
-                  Browse shops
-                </a>
-                <a
-                  href="#roles"
-                  className="rounded-[14px] border border-slate-900/10 bg-white/85 px-4 py-2 text-sm shadow-sm hover:-translate-y-[1px] hover:shadow-md transition"
-                >
-                  I am a business
-                </a>
-              </div>
-
-              {/* Search */}
-              <div className="mt-5 flex items-center gap-2 rounded-[18px] border border-slate-900/10 bg-white/85 p-3 shadow-[0_10px_22px_rgba(2,6,23,.08)]">
-                <input
-                  className="w-full rounded-[14px] border border-slate-900/10 bg-[#f6f7fb]/90 px-3 py-3 text-sm outline-none placeholder:text-slate-400"
-                  placeholder="Search laundry shop (name, area, street)…"
-                />
-                <button className="whitespace-nowrap rounded-[14px] border border-blue-700/30 bg-gradient-to-br from-blue-600 to-sky-500 px-4 py-3 text-sm font-medium text-white hover:shadow-md transition">
-                  Search
-                </button>
-              </div>
-
-              {/* Mini feature cards */}
-              <div className="mt-4 grid gap-3 lg:grid-cols-4">
-                <MiniCard
-                  code="01"
-                  title="Create order"
-                  desc="Select services, schedule pickup or dropoff."
-                />
-                <MiniCard
-                  code="02"
-                  title="Track status"
-                  desc="PLACED → CONFIRMED → IN_PROCESS → READY → COMPLETED."
-                />
-                <MiniCard
-                  code="03"
-                  title="Pay easily"
-                  desc="Cash, card, bank transfer, or KHQR."
-                />
-                <MiniCard
-                  code="04"
-                  title="Review shops"
-                  desc="Rate your experience and help others."
-                />
-              </div>
-            </div>
-
-            {/* Right */}
-            <aside
-              id="shops"
-              className="rounded-[26px] border border-slate-900/10 bg-white/70 p-4 shadow-[0_10px_22px_rgba(2,6,23,.08)]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-sm font-semibold">Nearby shops</div>
-                <div className="rounded-full border border-slate-900/10 bg-white/70 px-3 py-1.5 text-xs text-slate-500">
-                  Phnom Penh (demo)
-                </div>
-              </div>
-
-              <div className="mt-3 grid gap-2">
-                <ShopRow
-                  name="FreshFold Laundry"
-                  meta="Wash • Dry • Iron • ★ 4.6"
-                  status="OPEN"
-                />
-                <ShopRow
-                  name="CleanWave Express"
-                  meta="Wash • Dryclean • ★ 4.2"
-                  status="CLOSED"
-                />
-                <ShopRow
-                  name="UrbanClean"
-                  meta="Wash • Iron • ★ 4.4"
-                  status="OPEN"
-                />
-              </div>
-
-              <div className="mt-5">
-                <div className="text-sm font-semibold">Quick actions</div>
-                <div className="mt-3 grid gap-2">
-                  <button className="w-full rounded-[14px] border border-blue-700/30 bg-gradient-to-br from-blue-600 to-sky-500 px-4 py-2.5 text-sm font-medium text-white hover:shadow-md transition">
-                    Create laundry order
-                  </button>
-                  <button className="w-full rounded-[14px] border border-slate-900/10 bg-white/85 px-4 py-2.5 text-sm hover:shadow-md transition">
-                    Track an order
-                  </button>
-                  <button className="w-full rounded-[14px] border border-slate-900/10 bg-white/85 px-4 py-2.5 text-sm hover:shadow-md transition">
-                    Register your business
-                  </button>
-                </div>
-              </div>
-            </aside>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section id="features" className="mt-5">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800/90">
-            Platform highlights
-          </h2>
-          <div className="grid gap-3 lg:grid-cols-3">
-            <FeatureCard
-              icon="UI"
-              title="Simple flow"
-              desc="Browse shops → select services → schedule → confirm."
-            />
-            <FeatureCard
-              icon="API"
-              title="Clear statuses"
-              desc="Order, payment, and delivery statuses are separated."
-            />
-            <FeatureCard
-              icon="📣"
-              title="Notifications"
-              desc="Get updates when your order is confirmed or delivered."
-            />
-          </div>
-        </section>
-
-        {/* Roles */}
-        <section id="roles" className="mt-5">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800/90">
-            Built for every role
-          </h2>
-          <div className="grid gap-3 lg:grid-cols-4">
-            <RoleCard
-              title="Customer"
-              dotClass="bg-blue-600"
-              bullets={[
-                "Create laundry orders",
-                "Track order status",
-                "Review & rating",
-              ]}
-            />
-            <RoleCard
-              title="Laundry Business"
-              dotClass="bg-green-600"
-              bullets={[
-                "Accept / reject orders",
-                "Update laundry status",
-                "Manage services & pricing",
-              ]}
-            />
-            <RoleCard
-              title="Driver"
-              dotClass="bg-amber-500"
-              bullets={[
-                "Pickup / dropoff tasks",
-                "Update delivery status",
-                "Customer contact info",
-              ]}
-            />
-            <RoleCard
-              title="Admin"
-              dotClass="bg-red-500"
-              bullets={[
-                "Approve business applications",
-                "Manage drivers",
-                "Monitor platform",
-              ]}
-            />
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[26px] border border-slate-900/10 bg-white/75 p-5 shadow-[0_18px_55px_rgba(2,6,23,.12)]">
-          <div>
-            <div className="text-sm font-semibold">
-              Ready to try the mock flow?
-            </div>
-            <div className="mt-1 text-sm text-slate-500">
-              Use this homepage for screenshots in your report, then build real
-              pages later.
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <a
-              href="#features"
-              className="rounded-[14px] border border-slate-900/10 bg-white/85 px-4 py-2 text-sm hover:shadow-md transition"
-            >
-              See features
-            </a>
-            <button className="rounded-[14px] border border-blue-700/30 bg-gradient-to-br from-blue-600 to-sky-500 px-4 py-2 text-sm font-medium text-white hover:shadow-md transition">
-              Create order
+            <button className="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-100 font-semibold">
+              Sign Up
             </button>
           </div>
-        </section>
-
-        <footer className="py-6 text-center text-xs text-slate-500">
-          Homepage mock only • You can reuse this style for Login, Dashboards,
-          and Order Tracking pages.
-        </footer>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Small components ---------- */
-
-function MiniCard({
-  code,
-  title,
-  desc,
-}: {
-  code: string;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="rounded-[18px] border border-slate-900/10 bg-white/80 p-4 shadow-sm">
-      <div className="mb-3 grid h-10 w-10 place-items-center rounded-[14px] border border-slate-900/10 bg-[#f6f7fb]/90 font-mono text-xs text-slate-600">
-        {code}
-      </div>
-      <div className="text-sm font-semibold">{title}</div>
-      <div className="mt-2 text-sm leading-6 text-slate-500">{desc}</div>
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  desc,
-}: {
-  icon: string;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="rounded-[18px] border border-slate-900/10 bg-white/80 p-4 shadow-sm">
-      <div className="mb-3 grid h-10 w-10 place-items-center rounded-[14px] border border-slate-900/10 bg-[#f6f7fb]/90 font-mono text-xs text-slate-600">
-        {icon}
-      </div>
-      <div className="text-sm font-semibold">{title}</div>
-      <div className="mt-2 text-sm leading-6 text-slate-500">{desc}</div>
-    </div>
-  );
-}
-
-function RoleCard({
-  title,
-  dotClass,
-  bullets,
-}: {
-  title: string;
-  dotClass: string;
-  bullets: string[];
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-[18px] border border-slate-900/10 bg-white/80 p-4 shadow-sm">
-      <div className="absolute -right-20 -top-16 h-44 w-44 rounded-full bg-blue-600/10" />
-      <div className="relative flex items-center justify-between gap-2">
-        <div className="text-sm font-semibold">{title}</div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-900/10 bg-[#f6f7fb]/90 px-3 py-1.5 text-xs text-slate-500">
-          <span className={`h-2 w-2 rounded-full ${dotClass}`} />
-          {title === "Customer"
-            ? "Web"
-            : title === "Laundry Business"
-            ? "Dashboard"
-            : title === "Driver"
-            ? "Delivery"
-            : "Control"}
         </div>
       </div>
-      <ul className="relative mt-3 list-disc pl-5 text-sm leading-6 text-slate-500">
-        {bullets.map((b) => (
-          <li key={b}>{b}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ShopRow({
-  name,
-  meta,
-  status,
-}: {
-  name: string;
-  meta: string;
-  status: "OPEN" | "CLOSED";
-}) {
-  const dotClass = status === "OPEN" ? "bg-green-600" : "bg-amber-500";
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[16px] border border-slate-900/10 bg-white/80 p-3">
-      <div>
-        <div className="text-sm font-semibold">{name}</div>
-        <div className="mt-1 text-xs text-slate-500">{meta}</div>
-      </div>
-      <div className="inline-flex items-center gap-2 rounded-full border border-slate-900/10 bg-[#f6f7fb]/90 px-3 py-1.5 text-xs text-slate-500">
-        <span className={`h-2 w-2 rounded-full ${dotClass}`} />
-        {status}
-      </div>
-    </div>
+    </nav>
   );
 }

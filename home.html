@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartWash | Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 font-sans">
+
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="bg-blue-600 p-2 rounded-lg"><i class="fas fa-wind text-white"></i></div>
+                    <span class="text-xl font-bold text-slate-800">SmartWash</span>
+                </div>
+                <div class="hidden md:flex space-x-8 text-slate-600 font-medium">
+                    <a href="#shops" class="hover:text-blue-600">Browse Shops</a>
+                    <a href="#" class="hover:text-blue-600">My Orders</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="text-slate-600 font-medium">Login</button>
+                    <button class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-white pt-12 pb-20">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight">
+                Laundry Day, <span class="text-blue-600">Simplified.</span>
+            </h1>
+            <p class="text-lg text-slate-600 mb-10 max-w-2xl mx-auto">
+                Select a professional shop nearby, schedule a pickup, and track your clothes in real-time.
+            </p>
+            
+            <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-2 border border-slate-100 flex flex-col md:flex-row gap-2">
+                <div class="flex-1 flex items-center px-4 py-2 border-b md:border-b-0 md:border-r border-slate-100">
+                    <i class="fas fa-search text-slate-400 mr-3"></i>
+                    <input type="text" placeholder="Search for a shop or location..." class="w-full focus:outline-none text-slate-700">
+                </div>
+                <div class="flex-1 flex items-center px-4 py-2">
+                    <i class="fas fa-truck text-slate-400 mr-3"></i>
+                    <input type="text" placeholder="Track Order ID..." class="w-full focus:outline-none text-slate-700">
+                </div>
+                <button class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition">
+                    Find Laundry
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section id="shops" class="max-w-7xl mx-auto px-4 py-16">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-900">Recommended Shops</h2>
+                <p class="text-slate-500">Based on your location and top ratings</p>
+            </div>
+            
+            <div class="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto">
+                <button class="whitespace-nowrap bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">All Shops</button>
+                <button class="whitespace-nowrap bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50">Open Now</button>
+                <button class="whitespace-nowrap bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50">Top Rated (4.5+)</button>
+                <button class="whitespace-nowrap bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50">Express Service</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col">
+                <div class="relative h-48">
+                    <img src="https://images.unsplash.com/photo-1545173168-9f1947e8017e?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover" alt="Shop">
+                    <span class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-blue-600 shadow-sm">
+                        0.8 km away
+                    </span>
+                    <span class="absolute top-4 right-4 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider">
+                        OPEN
+                    </span>
+                </div>
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-xl font-bold text-slate-800">Bubbles & Suds</h3>
+                        <div class="flex items-center gap-1 text-amber-500 font-bold">
+                            <i class="fas fa-star text-xs"></i> 4.8
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-sm mb-4 line-clamp-1"><i class="fas fa-map-marker-alt mr-1 text-blue-400"></i> 123 University Ave, Campus North</p>
+                    
+                    <div class="flex items-center gap-3 py-3 border-y border-slate-50 mb-4">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-blue-600 text-[10px] font-bold">Wash</div>
+                            <div class="w-8 h-8 rounded-full bg-purple-100 border-2 border-white flex items-center justify-center text-purple-600 text-[10px] font-bold">Dry</div>
+                            <div class="w-8 h-8 rounded-full bg-orange-100 border-2 border-white flex items-center justify-center text-orange-600 text-[10px] font-bold">Iron</div>
+                        </div>
+                        <span class="text-xs text-slate-400">+3 services</span>
+                    </div>
+
+                    <button class="w-full py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-blue-600 transition-colors">
+                        Book Laundry
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col opacity-75">
+                <div class="relative h-48">
+                    <img src="https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover grayscale" alt="Shop">
+                    <span class="absolute top-4 right-4 bg-slate-500 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider">
+                        CLOSED
+                    </span>
+                </div>
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-xl font-bold text-slate-800">Eco-Clean Hub</h3>
+                        <div class="flex items-center gap-1 text-amber-500 font-bold">
+                            <i class="fas fa-star text-xs"></i> 4.5
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-sm mb-4"><i class="fas fa-map-marker-alt mr-1 text-blue-400"></i> 45 Station Road</p>
+                    <button class="w-full py-3 bg-slate-200 text-slate-500 font-bold rounded-2xl cursor-not-allowed">
+                        Opens Tomorrow 8AM
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col">
+                <div class="relative h-48">
+                    <img src="https://images.unsplash.com/photo-1489274495744-85ff17e7ad6d?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover" alt="Shop">
+                    <span class="absolute top-4 right-4 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider">
+                        OPEN
+                    </span>
+                </div>
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-xl font-bold text-slate-800">Prime Press</h3>
+                        <div class="flex items-center gap-1 text-amber-500 font-bold">
+                            <i class="fas fa-star text-xs"></i> 4.9
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-sm mb-4"><i class="fas fa-map-marker-alt mr-1 text-blue-400"></i> West Campus Gate</p>
+                    <button class="w-full py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-blue-600 transition-colors">
+                        Book Laundry
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="bg-blue-600 py-16">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="text-white text-center md:text-left">
+                <h2 class="text-3xl font-bold mb-2">Own a Laundry Business?</h2>
+                <p class="text-blue-100">Join our platform to reach more customers and manage orders efficiently.</p>
+            </div>
+            <button class="bg-white text-blue-600 px-8 py-4 rounded-2xl font-black text-lg hover:bg-blue-50 transition shadow-xl">
+                Partner With Us
+            </button>
+        </div>
+    </section>
+
+    <footer class="bg-white py-10 border-t border-slate-100 text-center">
+        <p class="text-slate-400 text-sm italic">&copy; 2026 Smart Laundry System Project - Assignment Demo</p>
+    </footer>
+
+</body>
+</html>
