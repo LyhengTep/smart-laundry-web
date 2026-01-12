@@ -210,12 +210,18 @@ function Navbar() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            <button className="text-slate-600 font-medium hover:text-blue-600 transition">
+            <Link
+              href="/auth/login"
+              className="text-slate-600 font-medium hover:text-blue-600 transition"
+            >
               Login
-            </button>
-            <button className="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-100 font-semibold">
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-100 font-semibold"
+            >
               Sign Up
-            </button>
+            </Link>
           </div>
         </div>
       </div>
