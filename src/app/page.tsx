@@ -1,6 +1,13 @@
+"use client";
+
+import { STORAGE_KEYS } from "@/config/common";
+import { useLocalStorage } from "@/hooks/localStorage";
+import { UserAuthResponse } from "@/types/auth";
+import { User } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
+  const { value, setValue } = useLocalStorage(STORAGE_KEYS.AUTH_USER, null);
   // Demo Data (In a real app, this comes from your database/ERD)
   const shops = [
     {
@@ -34,7 +41,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Navbar />
+      <Navbar
+        user={value}
+        onLogout={() => {
+          setValue(null);
+        }}
+      />
 
       {/* Hero Section */}
       <header className="bg-white pt-12 pb-20 px-4">
@@ -175,7 +187,11 @@ function ShopCard({
   );
 }
 
-function Navbar() {
+interface NavProps {
+  user?: UserAuthResponse;
+  onLogout?: () => void;
+}
+function Navbar(props: NavProps) {
   return (
     <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -209,20 +225,39 @@ function Navbar() {
               My Orders
             </Link>
           </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/auth/login"
-              className="text-slate-600 font-medium hover:text-blue-600 transition"
-            >
-              Login
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-100 font-semibold"
-            >
-              Sign Up
-            </Link>
-          </div>
+
+          {props?.user ? (
+            <div className="flex items-center gap-4">
+              <Link
+                href="/user/profile"
+                className="flex text-slate-600 font-medium hover:text-blue-600 transition"
+              >
+                <User className="mx-1" />
+                My Profile
+              </Link>
+              <button
+                onClick={props?.onLogout}
+                className="bg-red-600 text-white px-5 py-2 rounded-full hover:bg-red-700 transition shadow-lg shadow-red-100 font-semibold"
+              >
+                Log out
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <Link
+                href="/auth/login"
+                className="text-slate-600 font-medium hover:text-blue-600 transition"
+              >
+                Login
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-100 font-semibold"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>
