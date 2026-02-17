@@ -1,4 +1,5 @@
 export const API_ROUTES = {
-  REGISTER_USER: "/users",
+  REGISTER_USER: "/auths/signup",
   LOGIN: "/auths/login",
+  FETCH_DRIVERS: "/drivers",
 };

@@ -14,7 +14,7 @@ export type RoleSelectorValues = {
   icon?: ICONS;
 };
 
-export type RoleKeys = "CUSTOMER" | "MERCHANT" | "DRIVER" | "ADMIN";
+export type RoleKeys = "CUSTOMER" | "MERCHANT" | "DRIVER";
 const IconMapper = {
   user: User,
   store: Store,

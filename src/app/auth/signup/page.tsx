@@ -10,15 +10,38 @@ import { APP_NAME } from "@/config/common";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { registerUser } from "@/services/authService";
 import { RegisterUserDTO } from "@/types/auth";
-import { RegistrationForm } from "@/validations/authValidation";
+import {
+  CustomerSchema,
+  DriverRegistrationForm,
+  MerchantSchema,
+} from "@/validations/authValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowRight, IdCard, Lock, Mail, User, Wind } from "lucide-react";
+import axios from "axios";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CreditCard,
+  FileText,
+  IdCard,
+  Lock,
+  Mail,
+  Palette,
+  Truck,
+  User,
+  Wind,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
-import { SubmitHandler, useForm, UseFormSetValue } from "react-hook-form";
+import {
+  FieldErrors,
+  SubmitHandler,
+  useForm,
+  UseFormSetValue,
+} from "react-hook-form";
 import { z } from "zod";
+
 interface IFormInput {
   fullName: string;
   username: string;
@@ -26,9 +49,22 @@ interface IFormInput {
   phone: string;
   password: string;
   confirmPassword: string;
+  idNumber: string;
+  vehicleType: string;
+  plateNumber: string;
+  licenseNumber: string;
+  vehicleColor: string;
 }
 
-type FormValues = z.infer<typeof RegistrationForm>;
+const FormSchema = z.discriminatedUnion("role", [
+  CustomerSchema,
+  MerchantSchema,
+  DriverRegistrationForm,
+]);
+type FormValues = z.infer<typeof FormSchema>;
+// type FormValues =
+//   | z.infer<typeof DriverRegistrationForm>
+//   | z.infer<typeof RegistrationForm>;
 
 const setEmpty = (setValue: UseFormSetValue<FormValues>) => {
   setValue("fullName", "");
@@ -53,6 +89,7 @@ const roles: Record<string, RoleSelectorValues> = {
     icon: "driver",
   },
 };
+
 export default function SignupPage() {
   const toastCtx = useContext(ToastContext);
   const [userType, setUserType] = useState<RoleKeys>("CUSTOMER");
@@ -64,8 +101,10 @@ export default function SignupPage() {
     handleSubmit,
     formState: { errors },
     setValue,
+    clearErrors,
+    watch,
   } = useForm<FormValues>({
-    resolver: zodResolver(RegistrationForm),
+    resolver: zodResolver(FormSchema),
     mode: "onTouched",
   });
   const { mutate } = useMutation({
@@ -75,15 +114,50 @@ export default function SignupPage() {
 
       setTimeout(() => {
         toastCtx.setIsVisible(false);
+        router.push("/");
       }, 800);
+    },
+    onError: (e) => {
+      console.log("Error from service", e);
+      const message = axios.isAxiosError(e)
+        ? ((e.response?.data as any)?.detail ?? e.message)
+        : e instanceof Error
+          ? e.message
+          : "Something went wrong";
+      if (toastCtx.setToast)
+        toastCtx.setToast({
+          error: true,
+          message: message,
+        });
+
+      toastCtx.setIsVisible(true);
+
+      setTimeout(() => {
+        toastCtx.setIsVisible(false);
+      }, 1000);
     },
   });
 
   useEffect(() => {
     setEmpty(setValue);
+    clearErrors([
+      "email",
+      "fullName",
+      "confirmPassword",
+      "password",
+      "username",
+      "phone",
+      "idNumber",
+      "vehicleType",
+      "plateNumber",
+      "licenseNumber",
+      "vehicleColor",
+    ]);
+    setValue("role", userType);
   }, [userType]);
-  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);
+
     let payload: RegisterUserDTO = {
       full_name: data.fullName,
       user_name: data.username,
@@ -92,14 +166,31 @@ export default function SignupPage() {
       phone: data.phone,
       role: userType,
     };
+
+    if (data.role === "DRIVER") {
+      payload = {
+        ...payload,
+        id_number: data.idNumber,
+        vehicle_type: data.vehicleType,
+        plate_number: data.plateNumber,
+        license_number: data.licenseNumber,
+        vehicle_color: data.vehicleColor,
+      } as RegisterUserDTO;
+    }
+
+    console.log("Payload signup ====>", payload);
     await mutate(payload);
     setIsLoading(false);
-
-    setTimeout(() => {
-      router.push("/");
-    }, 1000);
   };
 
+  const role = watch("role");
+
+  const driverErrors =
+    role === "DRIVER"
+      ? (errors as FieldErrors<Extract<FormValues, { role: "DRIVER" }>>)
+      : undefined;
+
+  // return null;
   return (
     <>
       <div className="min-h-screen relative bg-slate-50 flex items-center justify-center p-4 py-12">
@@ -210,12 +301,10 @@ export default function SignupPage() {
                     placeholder="john@example.com"
                     className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 ring-blue-500 outline-none"
                   />
-                  {errors.email && (
-                    <p className="text-red-600 text-sm">
-                      {errors.email.message}
-                    </p>
-                  )}
                 </div>
+                {errors.email && (
+                  <p className="text-red-600 text-sm">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -229,12 +318,10 @@ export default function SignupPage() {
                     placeholder="+855 (96) 000-0000"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 ring-blue-500 outline-none"
                   />
-                  {errors.phone && (
-                    <p className="text-red-600 text-sm">
-                      {errors.phone.message}
-                    </p>
-                  )}
                 </div>
+                {errors.phone && (
+                  <p className="text-red-600 text-sm">{errors.phone.message}</p>
+                )}
               </div>
 
               {/* Conditional Field: Address for Customer / Shop Name for Owner */}
@@ -251,12 +338,12 @@ export default function SignupPage() {
                     placeholder="••••••••"
                     className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 ring-blue-500 outline-none"
                   />
-                  {errors.password && (
-                    <p className="text-red-600 text-sm">
-                      {errors.password.message}
-                    </p>
-                  )}
                 </div>
+                {errors.password && (
+                  <p className="text-red-600 text-sm">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -275,6 +362,120 @@ export default function SignupPage() {
                   </p>
                 )}
               </div>
+              {role === "DRIVER" && (
+                <>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                      ID Number
+                    </label>
+                    <div className="relative">
+                      <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5" />
+                      <input
+                        {...register("idNumber")}
+                        type="text"
+                        placeholder="Government ID Number"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 ring-blue-500 outline-none"
+                      />
+                    </div>
+                    {driverErrors?.idNumber && (
+                      <p className="text-red-600 text-sm">
+                        {driverErrors.idNumber.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Truck size={16} /> Vehicle & License
+                    </h3>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                        Vehicle Type
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <select
+                            {...register("vehicleType")}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all text-slate-500 appearance-none"
+                          >
+                            <option value="">Select Vehicle Type</option>
+                            <option value="motorcycle">
+                              Motorcycle / Scooter
+                            </option>
+                            <option value="car">
+                              Tuk Tuk / Three-wheeled Transportation
+                            </option>
+                            <option value="bicycle">E-Bike / Bicycle</option>
+                          </select>
+                          {driverErrors?.vehicleType && (
+                            <p className="text-red-600 text-sm">
+                              {driverErrors.vehicleType.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4 space-y-2">
+                        <div>
+                          <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                            Plate Number
+                          </label>
+                          <div className="relative">
+                            <BadgeCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5" />
+                            <input
+                              {...register("plateNumber")}
+                              type="text"
+                              placeholder="Plate Number"
+                              className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all"
+                            />
+                          </div>
+                          {driverErrors?.plateNumber && (
+                            <p className="text-red-600 text-sm">
+                              {driverErrors.plateNumber.message}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                            License Number
+                          </label>
+                          <div className="relative">
+                            <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5" />
+                            <input
+                              {...register("licenseNumber")}
+                              type="text"
+                              placeholder="License Number"
+                              className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all"
+                            />
+                          </div>
+                          {driverErrors?.licenseNumber && (
+                            <p className="text-red-600 text-sm">
+                              {driverErrors.licenseNumber.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                        Vehicle color
+                      </label>
+                      <div className="relative">
+                        <Palette className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5" />
+                        <input
+                          {...register("vehicleColor")}
+                          type="text"
+                          placeholder="Input your vehicle color"
+                          className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 ring-blue-500 outline-none"
+                        />
+                      </div>
+                      {driverErrors?.vehicleColor && (
+                        <p className="text-red-600 text-sm">
+                          {driverErrors.vehicleColor.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="md:col-span-2 pt-4">
                 <button

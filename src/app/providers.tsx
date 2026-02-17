@@ -1,4 +1,5 @@
 "use client";
+import { DialogProvider } from "@/contexts/DialogProvider";
 import { ToastProvider } from "@/contexts/ToastProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
@@ -11,7 +12,9 @@ export default function Providers({ children }: { children: ReactNode }) {
   });
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider>{children}</ToastProvider>
+      <DialogProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </DialogProvider>
     </QueryClientProvider>
   );
 }

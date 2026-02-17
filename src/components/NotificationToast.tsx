@@ -1,4 +1,8 @@
-export const NotifcationToast = ({
+"use client";
+
+import { useEffect, useState } from "react";
+
+const NotifcationToast = ({
   onClose,
   error,
   message,
@@ -7,9 +11,16 @@ export const NotifcationToast = ({
   error: boolean;
   message?: string;
 }) => {
-  let colorClass = error ? "red" : "green";
+  const [colorClass, setColorClass] = useState("green");
+
+  useEffect(() => {
+    setColorClass(error ? "red" : "green");
+  }, [error]);
+  // let colorClass = error ? "red" : "green";
+
+  console.log("Color class", colorClass);
   return (
-    <div id="toast" className=" fixed top-6 right-6 z-50 w-[92%] max-w-sm">
+    <div id="toast" className=" fixed top-6 right-6 z-1000 w-[92%] max-w-sm">
       <div
         className={`flex items-start gap-3 rounded-2xl border bg-${colorClass}-50 border-${colorClass}-200 p-4 shadow-lg`}
       >
@@ -49,3 +60,5 @@ export const NotifcationToast = ({
     </div>
   );
 };
+
+export default NotifcationToast;

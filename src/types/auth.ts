@@ -7,9 +7,18 @@ export interface RegisterUserDTO {
   role: RoleName;
 }
 
+export interface RegisterDriverDTO extends RegisterUserDTO {
+  id_number: string;
+  vehicle_type: string;
+  plate_number: string;
+  license_number: string;
+  vehicle_color: string;
+}
+
 export interface LoginDTO {
   login: string;
   password: string;
+  role: string;
   // email: string;
   // phone: string;
   // role: RoleName;

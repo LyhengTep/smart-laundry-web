@@ -1,8 +1,11 @@
 import { API_ROUTES } from "@/config/apiRoute";
 import { http } from "@/lib/axios";
-import { LoginDTO, RegisterUserDTO } from "@/types/auth";
+import { LoginDTO, RegisterDriverDTO, RegisterUserDTO } from "@/types/auth";
 
-export const registerUser = async (data: RegisterUserDTO) => {
+export const registerUser = async (
+  data: RegisterDriverDTO | RegisterUserDTO,
+) => {
+  console.log("I have received a payload of ", data);
   const res = await http.post(API_ROUTES.REGISTER_USER, data);
   console.log("Response --->", res);
 

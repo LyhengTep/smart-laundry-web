@@ -1,7 +1,12 @@
 "use client";
 
-import { NotifcationToast } from "@/components/NotificationToast";
+import dynamic from "next/dynamic";
 import { createContext, ReactNode, useEffect, useState } from "react";
+
+const NotifcationToast = dynamic(
+  () => import("@/components/NotificationToast"),
+  { ssr: false },
+);
 interface ToastContextType {
   toast: ToastType | null;
   setToast?: ((value: ToastType) => void) | null;
@@ -25,14 +30,18 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (!isVisible)
+    if (isVisible == false)
       setToast({
         error: false,
         message: undefined,
       });
     setTimeout(() => {
       setIsVisible(false);
-    }, 3000);
+      setToast({
+        error: false,
+        message: undefined,
+      });
+    }, 2000);
   }, [isVisible]);
   return (
     <ToastContext.Provider

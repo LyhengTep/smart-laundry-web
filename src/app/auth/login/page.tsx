@@ -12,11 +12,12 @@ import { LoginDTO, UserAuthResponse } from "@/types/auth";
 import { LoginForm } from "@/validations/authValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 import { ArrowRight, Lock, Mail, Wind } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useContext, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useContext, useEffect, useState } from "react";
+import { SubmitHandler, useForm, UseFormSetValue } from "react-hook-form";
 import { z } from "zod";
 const roles: Record<string, RoleSelectorValues> = {
   CUSTOMER: {
@@ -36,7 +37,13 @@ const roles: Record<string, RoleSelectorValues> = {
 interface IFormInput {
   login: string;
   password: string;
+  role: string;
 }
+
+const setEmpty = (setValue: UseFormSetValue<FormValues>) => {
+  setValue("login", "");
+  setValue("password", "");
+};
 
 type FormValues = z.infer<typeof LoginForm>;
 export default function LoginPage() {
@@ -55,23 +62,32 @@ export default function LoginPage() {
 
   const { setValue } = useLocalStorage<UserAuthResponse>(
     STORAGE_KEYS.AUTH_USER,
-    null
+    null,
   );
+
+  useEffect(() => {
+    setFormValue("role", role);
+  }, [role]);
   const { mutate } = useMutation({
     mutationFn: login,
     onError: (e) => {
       console.log("Error on login", e);
+
+      const message = axios.isAxiosError(e)
+        ? ((e.response?.data as any)?.detail ?? e.message)
+        : e instanceof Error
+          ? e.message
+          : "Something went wrong";
       toastCtx?.setToast &&
         toastCtx?.setToast({
           error: true,
-          message: e?.response?.data?.detail,
+          message: message,
         });
       toastCtx.setIsVisible(true);
     },
 
     onSuccess: (value) => {
       console.log("value return from the server", value);
-
       setValue(value);
       toastCtx.setIsVisible(true);
       setTimeout(() => {
@@ -79,14 +95,21 @@ export default function LoginPage() {
       }, 1000);
     },
   });
-  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
-    let payload: LoginDTO = {
-      login: data.login,
-      password: data.password,
-    };
 
-    await mutate(payload);
+  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+    try {
+      console.log("Form Data --->", data);
+      let payload: LoginDTO = {
+        login: data.login,
+        password: data.password,
+        role: data.role,
+      };
+      await mutate(payload);
+    } catch (e) {
+      console.log("Submit ===>", e);
+    }
   };
+  // return null;
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="bg-white max-w-md w-full rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
@@ -111,7 +134,14 @@ export default function LoginPage() {
 
         <div className="p-8">
           {/* Role Segmented Control */}
-          <RoleSelector values={roles} setType={setRole} currentValue={role} />
+          <RoleSelector
+            values={roles}
+            setType={(role) => {
+              setRole(role);
+              setEmpty(setFormValue);
+            }}
+            currentValue={role}
+          />
 
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div className="relative">
@@ -123,6 +153,9 @@ export default function LoginPage() {
                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border rounded-2xl outline-none focus:ring-2 ring-blue-500"
               />
             </div>
+            {errors.login && (
+              <p className="text-red-600 text-sm">{errors.login.message}</p>
+            )}
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5" />
               <input
@@ -132,6 +165,9 @@ export default function LoginPage() {
                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border rounded-2xl outline-none focus:ring-2 ring-blue-500"
               />
             </div>
+            {errors.password && (
+              <p className="text-red-600 text-sm">{errors.password.message}</p>
+            )}
             <button
               type="submit"
               className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-600 transition-all"
