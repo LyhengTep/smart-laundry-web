@@ -11,24 +11,40 @@ const NotifcationToast = ({
   error: boolean;
   message?: string;
 }) => {
-  const [colorClass, setColorClass] = useState("green");
+  const [colorClass, setColorClass] = useState<"green" | "red">("green");
 
   useEffect(() => {
     setColorClass(error ? "red" : "green");
   }, [error]);
-  // let colorClass = error ? "red" : "green";
 
-  console.log("Color class", colorClass);
+  const styles =
+    colorClass === "red"
+      ? {
+          wrap: "bg-red-50 border-red-200",
+          iconWrap: "bg-red-100",
+          icon: "text-red-600",
+          title: "text-red-900",
+          message: "text-red-700",
+          close: "text-red-700 hover:bg-red-100",
+        }
+      : {
+          wrap: "bg-green-50 border-green-200",
+          iconWrap: "bg-green-100",
+          icon: "text-green-600",
+          title: "text-green-900",
+          message: "text-green-700",
+          close: "text-green-700 hover:bg-green-100",
+        };
   return (
-    <div id="toast" className=" fixed top-6 right-6 z-1000 w-[92%] max-w-sm">
+    <div id="toast" className="fixed top-6 right-6 z-50 w-[92%] max-w-sm">
       <div
-        className={`flex items-start gap-3 rounded-2xl border bg-${colorClass}-50 border-${colorClass}-200 p-4 shadow-lg`}
+        className={`flex items-start gap-3 rounded-2xl border p-4 shadow-lg ${styles.wrap}`}
       >
         {/* <!-- Icon --> */}
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-${colorClass}-100 `}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${styles.iconWrap}`}
         >
-          <span className={`text-${colorClass}-600 text-lg`}>
+          <span className={`text-lg ${styles.icon}`}>
             {!error ? "✓" : "✕"}
           </span>
         </div>
@@ -36,10 +52,10 @@ const NotifcationToast = ({
         {/* 
         <!-- Content --> */}
         <div className="flex-1">
-          <p className={`text-${colorClass}-900 font-semibold`}>
+          <p className={`font-semibold ${styles.title}`}>
             {!error ? "Success!" : "Error!"}
           </p>
-          <p className={`text-${colorClass}-700 mt-1 text-sm`}>
+          <p className={`mt-1 text-sm ${styles.message}`}>
             {message ||
               (error
                 ? "Unknown Error Occurred"
@@ -51,7 +67,7 @@ const NotifcationToast = ({
         <button
           // onclick="document.getElementById('toast').classNameList.add('hidden')"
           onClick={onClose}
-          className={`ml-2 rounded-lg px-2 py-1 text-${colorClass}-700 hover:bg-green-100`}
+          className={`ml-2 rounded-lg px-2 py-1 ${styles.close}`}
           aria-label="Close"
         >
           ✕

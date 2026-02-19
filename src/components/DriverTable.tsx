@@ -1,4 +1,5 @@
 import { DriverResponse } from "@/types/driver";
+import { formatDateUTC7 } from "@/utils/date";
 import {
   CheckCircle,
   ChevronLeft,
@@ -15,7 +16,9 @@ interface PropsType {
   total: number;
   size: number;
   onPageChange: (page: number) => void;
-  onApprove: (row: any) => void;
+  onView: (driver: DriverResponse) => void;
+  onApprove: (driver: DriverResponse) => void;
+  onReject: (driver: DriverResponse) => void;
 }
 export const DriverTable = ({
   drivers,
@@ -24,7 +27,9 @@ export const DriverTable = ({
   total,
   size,
   onPageChange,
+  onView,
   onApprove,
+  onReject,
 }: PropsType) => {
   const handleAction = (id: string, newStatus: "Approved" | "Rejected") => {
     // setDrivers(drivers.filter((d) => d.id !== id));
@@ -103,25 +108,26 @@ export const DriverTable = ({
                 </span>
               </td>
               <td className="p-6 text-sm text-slate-500 font-medium">
-                {driver.user.created_at}
+                {formatDateUTC7(driver.user.created_at)}
               </td>
               <td className="p-6">
                 <div className="flex justify-end gap-2">
                   <button
+                    onClick={() => onView(driver)}
                     className="p-2 text-slate-400 hover:text-blue-600 transition"
                     title="View Documents"
                   >
                     <Eye size={20} />
                   </button>
                   <button
-                    onClick={() => handleAction(driver.id, "Rejected")}
+                    onClick={() => onReject(driver)}
                     className="p-2 text-red-400 hover:bg-red-50 rounded-xl transition"
                     title="Reject Application"
                   >
                     <XCircle size={20} />
                   </button>
                   <button
-                    onClick={() => onApprove(driver.id)}
+                    onClick={() => onApprove(driver)}
                     className="p-2 text-green-500 hover:bg-green-50 rounded-xl transition"
                     title="Approve Driver"
                   >
@@ -134,33 +140,36 @@ export const DriverTable = ({
         </tbody>
       </table>
       {/* Pagination Footer */}
-      <div className="p-5 border-t border-slate-50 flex items-center justify-between bg-white mb-8">
-        <div>
-          <p className="text-xs font-medium text-slate-400">
-            Showing {(page - 1) * size + 1} to {Math.min(page * size, total)} of{" "}
-            {total}
-          </p>
+
+      {drivers?.length > 0 && (
+        <div className="p-5 border-t border-slate-50 flex items-center justify-between bg-white mb-8">
+          <div>
+            <p className="text-xs font-medium text-slate-400">
+              Showing {(page - 1) * size + 1} to {Math.min(page * size, total)}{" "}
+              of {total}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-30 transition"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs font-bold text-slate-700 mx-2">
+              Page {page} of {pages}
+            </span>
+            <button
+              disabled={currentPage === pages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-30 transition"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-            className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-30 transition"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className="text-xs font-bold text-slate-700 mx-2">
-            Page {page} of {pages}
-          </span>
-          <button
-            disabled={currentPage === pages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-30 transition"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

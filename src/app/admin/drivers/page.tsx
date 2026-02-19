@@ -5,47 +5,87 @@ import Link from "next/link";
 import { useContext, useState } from "react";
 
 import { DriverTable } from "@/components/DriverTable";
+import { DriverDetailsPanel } from "@/components/DriverDetailsPanel";
 import { DialogCtx } from "@/contexts/DialogProvider";
+import { ToastContext } from "@/contexts/ToastProvider";
 import { useDrivers } from "@/hooks/drivers/driverHook";
-
-// Mock Data representing your Driver table in the ERD
-const INITIAL_DRIVERS = [
-  {
-    id: "DRV-001",
-    name: "James Wilson",
-    email: "james.w@delivery.com",
-    vehicle: "Motorcycle",
-    joinedAt: "2026-01-28",
-    status: "Pending",
-  },
-  {
-    id: "DRV-002",
-    name: "Sarah Chen",
-    email: "sarah.c@express.com",
-    vehicle: "Car",
-    joinedAt: "2026-01-30",
-    status: "Pending",
-  },
-  {
-    id: "DRV-003",
-    name: "Mike Johnson",
-    email: "mike.j@logistics.com",
-    vehicle: "E-Bike",
-    joinedAt: "2026-01-31",
-    status: "Pending",
-  },
-];
+import {
+  approveDriver as approveDriverRequest,
+  rejectDriver as rejectDriverRequest,
+} from "@/services/driverService";
+import { toToastMessage } from "@/utils/toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { DriverResponse } from "@/types/driver";
 
 export default function DriverApprovalPage() {
-  const [drivers, setDrivers] = useState(INITIAL_DRIVERS);
+  const toastCtx = useContext(ToastContext);
+  const [selectedDriver, setSelectedDriver] = useState<DriverResponse | null>(
+    null,
+  );
   const [driverParams, setDriverParams] = useState({
     page: 1,
     size: 10,
     status: "INACTIVE",
   });
+
+  const queryClient = useQueryClient();
+  const { mutate: approveDriver } = useMutation({
+    mutationFn: (driverId: string) => approveDriverRequest(driverId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toastCtx?.setToast?.({
+        error: false,
+        message: "Driver approved successfully",
+      });
+      toastCtx?.setIsVisible(true);
+    },
+    onError: (e) => {
+      console.log("Error approving driver", e);
+      const detail = axios.isAxiosError(e)
+        ? ((e.response?.data as any)?.detail ?? e.message)
+        : e;
+      const message = toToastMessage(detail);
+      toastCtx?.setToast?.({
+        error: true,
+        message,
+      });
+      toastCtx?.setIsVisible(true);
+    },
+  });
+
+  const { mutate: rejectDriver } = useMutation({
+    mutationFn: (driverId: string) => rejectDriverRequest(driverId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toastCtx?.setToast?.({
+        error: false,
+        message: "Driver rejected successfully",
+      });
+      toastCtx?.setIsVisible(true);
+    },
+    onError: (e) => {
+      console.log("Error rejecting driver", e);
+      const detail = axios.isAxiosError(e)
+        ? ((e.response?.data as any)?.detail ?? e.message)
+        : e;
+      const message = toToastMessage(detail);
+      toastCtx?.setToast?.({
+        error: true,
+        message,
+      });
+      toastCtx?.setIsVisible(true);
+    },
+  });
+
   const handleAction = (id: string, newStatus: "Approved" | "Rejected") => {
-    setDrivers(drivers.filter((d) => d.id !== id));
-    alert(`Driver ${id} has been ${newStatus}`);
+    if (newStatus === "Approved") {
+      approveDriver(id);
+      return;
+    }
+    if (newStatus === "Rejected") {
+      rejectDriver(id);
+    }
   };
 
   const onPageChange = (page: number) => {
@@ -120,18 +160,38 @@ export default function DriverApprovalPage() {
         {/* Approval Table */}
         <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
           <DriverTable
-            drivers={data?.items}
-            page={data?.page}
-            pages={data?.pages}
-            total={data?.total}
-            size={data?.size}
+            drivers={data?.items ?? []}
+            page={data?.page ?? 1}
+            pages={data?.pages ?? 1}
+            total={data?.total ?? 0}
+            size={data?.size ?? 10}
             onPageChange={onPageChange}
-            onApprove={(id) => {
-              dialogCtx.open();
+            onView={(driver) => setSelectedDriver(driver)}
+            onApprove={(driver) => {
+              dialogCtx.open({
+                driverName: driver.user.full_name,
+                title: "Confirm Approval?",
+                onConfirm: () => handleAction(driver.id, "Approved"),
+              });
+            }}
+            onReject={(driver) => {
+              dialogCtx.open({
+                driverName: driver.user.full_name,
+                title: "Reject Application?",
+                description: (
+                  <>
+                    This will reject <strong>{driver.user.full_name}</strong> and
+                    they will not be able to accept delivery orders.
+                  </>
+                ),
+                confirmLabel: "Yes, Reject",
+                tone: "danger",
+                onConfirm: () => handleAction(driver.id, "Rejected"),
+              });
             }}
           />
 
-          {drivers.length === 0 && (
+          {(data?.items?.length ?? 0) === 0 && (
             <div className="p-20 text-center">
               <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShieldCheck className="text-slate-300" />
@@ -143,6 +203,12 @@ export default function DriverApprovalPage() {
           )}
         </div>
       </main>
+      {selectedDriver && (
+        <DriverDetailsPanel
+          driver={selectedDriver}
+          onClose={() => setSelectedDriver(null)}
+        />
+      )}
     </div>
   );
 }

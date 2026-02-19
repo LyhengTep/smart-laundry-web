@@ -11,3 +11,15 @@ export const getDrivers = async (params: DriverParams) => {
 
   return res?.data;
 };
+
+export const approveDriver = async (driverId: string) => {
+  const res = await http.patch(API_ROUTES.APPROVE_DRIVER(driverId));
+
+  return res?.data;
+};
+
+export const rejectDriver = async (driverId: string) => {
+  const res = await http.patch(API_ROUTES.REJECT_DRIVER(driverId));
+
+  return res?.data;
+};
