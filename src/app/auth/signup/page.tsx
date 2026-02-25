@@ -10,6 +10,7 @@ import { APP_NAME } from "@/config/common";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { registerUser } from "@/services/authService";
 import { RegisterUserDTO } from "@/types/auth";
+import { toToastMessage } from "@/utils/toast";
 import {
   CustomerSchema,
   DriverRegistrationForm,
@@ -127,14 +128,12 @@ export default function SignupPage() {
       if (toastCtx.setToast)
         toastCtx.setToast({
           error: true,
-          message: message,
+          message: toToastMessage(message),
         });
 
       toastCtx.setIsVisible(true);
 
-      setTimeout(() => {
-        toastCtx.setIsVisible(false);
-      }, 1000);
+      // toastCtx.setIsVisible(false);
     },
   });
 

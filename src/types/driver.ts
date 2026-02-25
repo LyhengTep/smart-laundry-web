@@ -13,7 +13,8 @@ export type DriverResponse = {
     email: string;
     user_name: string;
     phone: string;
-    status: "ACTIVE" | "INACTIVE"; // better strict typing
+    role: string;
+    status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "REJECTED"; // better strict typing
     created_at: string; // ISO date string
     updated_at: string; // ISO date string
   };
