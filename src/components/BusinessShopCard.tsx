@@ -1,47 +1,96 @@
 "use client";
 
+import { Business } from "@/types/business";
 import { ArrowRight, MapPin, Store } from "lucide-react";
 
 interface BusinessShopCardProps {
-  shop: any;
-  onSelect: (shop: any) => void;
+  shop: Business;
+  onSelect: (shop: Business) => void;
 }
 
 export const BusinessShopCard = ({ shop, onSelect }: BusinessShopCardProps) => {
+  const normalizedStatus = (shop.status || "").toUpperCase();
+  const isPending = normalizedStatus === "PENDING";
+  const statusClasses =
+    normalizedStatus === "APPROVED"
+      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+      : normalizedStatus === "PENDING"
+        ? "bg-amber-100 text-amber-700 border-amber-200"
+        : "bg-slate-100 text-slate-600 border-slate-200";
+
   return (
-    <>
-      <div
-        key={shop.id}
-        className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all group cursor-pointer"
-        onClick={() => {
-          onSelect(shop);
-        }}
-      >
+    <div
+      key={shop.id}
+      className={`rounded-3xl p-6 border shadow-sm transition-all group cursor-pointer relative overflow-hidden ${
+        isPending
+          ? "bg-slate-100 border-slate-300 text-slate-500"
+          : "bg-gradient-to-br from-white to-slate-50 border-slate-200 hover:shadow-xl hover:border-blue-200"
+      }`}
+      onClick={() => {
+        onSelect(shop);
+      }}
+    >
+      {!isPending && (
+        <div className="absolute -top-12 -right-12 size-32 rounded-full bg-blue-100/40 blur-2xl" />
+      )}
+
+      <div className="relative">
         <div className="flex justify-between items-start mb-4">
-          <div className="bg-blue-50 p-3 rounded-2xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+          <div
+            className={`p-3 rounded-2xl transition-colors ${
+              isPending
+                ? "bg-slate-200 text-slate-500"
+                : "bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white"
+            }`}
+          >
             <Store size={24} />
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-xs font-bold ${shop.status === "Open" ? "bg-green-100 text-green-600" : "bg-slate-100 text-slate-400"}`}
+            className={`px-3 py-1 rounded-full text-xs font-bold border ${statusClasses}`}
           >
-            {shop.status.toUpperCase()}
+            {normalizedStatus || "N/A"}
           </span>
         </div>
-        <h3 className="text-xl font-bold text-slate-900">{shop.name}</h3>
-        <div className="flex items-center gap-1 text-slate-400 text-sm mt-1 mb-6">
-          <MapPin size={14} /> {shop.location}
+
+        <h3
+          className={`text-xl font-bold mb-2 ${isPending ? "text-slate-600" : "text-slate-900"}`}
+        >
+          {shop.name}
+        </h3>
+
+        <div
+          className={`inline-flex max-w-full items-center gap-2 rounded-xl px-3 py-2 mb-6 ${
+            isPending
+              ? "bg-slate-200 text-slate-500"
+              : "bg-slate-100 text-slate-600"
+          }`}
+        >
+          <MapPin size={14} className="shrink-0" />
+          <span className="text-sm truncate">{shop.address}</span>
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-slate-50">
           <div className="text-sm">
-            <span className="font-bold text-blue-600">{shop.orders}</span>
-            <span className="text-slate-500 ml-1">Active Orders</span>
+            <span
+              className={
+                isPending
+                  ? "font-bold text-slate-500"
+                  : "font-bold text-blue-600"
+              }
+            >
+              {normalizedStatus || "UNKNOWN"}
+            </span>
+            <span className="text-slate-500 ml-1">Status</span>
           </div>
-          <div className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div
+            className={`opacity-0 group-hover:opacity-100 transition-opacity ${
+              isPending ? "text-slate-500" : "text-blue-600"
+            }`}
+          >
             <ArrowRight size={20} />
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
