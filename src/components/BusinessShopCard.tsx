@@ -1,14 +1,21 @@
 "use client";
 
 import { Business } from "@/types/business";
-import { ArrowRight, MapPin, Store } from "lucide-react";
+import { ArrowRight, MapPin, Store, Trash2 } from "lucide-react";
 
 interface BusinessShopCardProps {
   shop: Business;
   onSelect: (shop: Business) => void;
+  onRemove?: (shop: Business) => void;
+  removing?: boolean;
 }
 
-export const BusinessShopCard = ({ shop, onSelect }: BusinessShopCardProps) => {
+export const BusinessShopCard = ({
+  shop,
+  onSelect,
+  onRemove,
+  removing = false,
+}: BusinessShopCardProps) => {
   const normalizedStatus = (shop.status || "").toUpperCase();
   const isPending = normalizedStatus === "PENDING";
   const statusClasses =
@@ -82,12 +89,28 @@ export const BusinessShopCard = ({ shop, onSelect }: BusinessShopCardProps) => {
             </span>
             <span className="text-slate-500 ml-1">Status</span>
           </div>
-          <div
-            className={`opacity-0 group-hover:opacity-100 transition-opacity ${
-              isPending ? "text-slate-500" : "text-blue-600"
-            }`}
-          >
-            <ArrowRight size={20} />
+          <div className="flex items-center gap-2">
+            {onRemove && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(shop);
+                }}
+                disabled={removing}
+                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={14} />
+                {removing ? "Removing..." : "Remove"}
+              </button>
+            )}
+            <div
+              className={`opacity-0 group-hover:opacity-100 transition-opacity ${
+                isPending ? "text-slate-500" : "text-blue-600"
+              }`}
+            >
+              <ArrowRight size={20} />
+            </div>
           </div>
         </div>
       </div>

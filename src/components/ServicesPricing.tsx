@@ -55,6 +55,7 @@ export const ServicesPricingStep = ({
             {/* Left: Checkbox and Image */}
             <div className="flex items-center gap-4 flex-1">
               <button
+                type="button"
                 onClick={() => toggleService(service.id)}
                 className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
                   service.enabled

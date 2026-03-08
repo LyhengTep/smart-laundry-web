@@ -31,6 +31,7 @@ export type UserAuthResponse = {
   email: string;
   phone: string;
   status: "ACTIVE" | "INACTIVE";
+  role: RoleName;
   created_at: string; // ISO datetime
   updated_at: string; // ISO datetime
   token: string; // JWT

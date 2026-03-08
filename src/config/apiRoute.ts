@@ -2,6 +2,8 @@ export const API_ROUTES = {
   REGISTER_USER: "/auths/signup",
   LOGIN: "/auths/login",
   FETCH_BUSINESSES: "/businesses/",
+  GET_BUSINESS: (id: string) => `/businesses/${id}`,
+  UPDATE_BUSINESS: (id: string) => `/businesses/${id}`,
   FETCH_LAUNDRY_SERVICES: "/laundry-services/",
   FETCH_DRIVERS: "/drivers",
   APPROVE_DRIVER: (id: string) => `/drivers/${id}/approve`,
@@ -10,5 +12,6 @@ export const API_ROUTES = {
   UPDATE_DRIVER: (id: string) => `/drivers/${id}`,
   SUSPEND_DRIVER: (id: string) => `/drivers/${id}/suspend`,
   CREATE_BUSINESS: "/businesses/",
+  DELETE_BUSINESS: (business_id: string) => `/businesses/${business_id}`,
   CREATE_BUSINESS_SERVICES: "/business-services/bulk",
 };

@@ -9,10 +9,11 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { notFound, usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { useDrivers } from "@/hooks/drivers/driverHook";
+import { getCurrentUser } from "@/services/authService";
 
 const navItemClass = (active: boolean, collapsed: boolean) =>
   [
@@ -31,6 +32,12 @@ export default function AdminLayout({
   const pendingCount = data?.total ?? 0;
   const [collapsed, setCollapsed] = useState(false);
 
+  const user = getCurrentUser();
+
+  if (user && user.role !== "ADMIN") {
+    console.log("Current User in Admin Layout:", user);
+    notFound();
+  }
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       <aside

@@ -5,6 +5,7 @@ import {
   BusinessRequest,
   BusinessResponse,
   BusinessServiceRequest,
+  BusinessUpdateRequest,
   LaundryServiceResponse,
 } from "@/types/business";
 
@@ -18,6 +19,13 @@ export const getBusinesses = async (
     },
   );
 
+  return res.data;
+};
+
+export const getBusinessById = async (
+  id: string,
+): Promise<BusinessResponse> => {
+  const res = await http.get<BusinessResponse>(API_ROUTES.GET_BUSINESS(id));
   return res.data;
 };
 
@@ -51,5 +59,27 @@ export const createBusinessServices = async (
 ) => {
   const res = await http.post(API_ROUTES.CREATE_BUSINESS_SERVICES, data);
 
+  return res.data;
+};
+
+export const deleteBusiness = async (business_id: string) => {
+  const res = await http.delete(API_ROUTES.DELETE_BUSINESS(business_id));
+  return res.data;
+};
+
+export const updateBusiness = async (
+  id: string,
+  data: BusinessUpdateRequest,
+): Promise<BusinessResponse> => {
+  console.log("Updating business with data:", data); // Debug log to check the data being sent
+  const res = await http.put<BusinessResponse>(
+    API_ROUTES.UPDATE_BUSINESS(id),
+    data,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
   return res.data;
 };

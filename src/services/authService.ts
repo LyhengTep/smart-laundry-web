@@ -1,6 +1,12 @@
 import { API_ROUTES } from "@/config/apiRoute";
+import { STORAGE_KEYS } from "@/config/common";
 import { http } from "@/lib/axios";
-import { LoginDTO, RegisterDriverDTO, RegisterUserDTO } from "@/types/auth";
+import {
+  LoginDTO,
+  RegisterDriverDTO,
+  RegisterUserDTO,
+  UserAuthResponse,
+} from "@/types/auth";
 
 export const registerUser = async (
   data: RegisterDriverDTO | RegisterUserDTO,
@@ -25,4 +31,14 @@ export const login = async (data: LoginDTO) => {
   }
 
   return res.data;
+};
+
+export const getCurrentUser = () => {
+  try {
+    const res = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
+    return res ? (JSON.parse(res) as UserAuthResponse) : null;
+  } catch (e) {
+    console.log("Error fetching current user", e);
+    return null;
+  }
 };

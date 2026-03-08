@@ -12,6 +12,7 @@ import { uploadFile } from "@/services/file";
 import { getAddress } from "@/services/geoService";
 import { BusinessRequest, BusinessServiceRequest } from "@/types/business";
 import { FileResponse } from "@/types/fileType";
+import { formatLaundryServiceType } from "@/utils/common";
 import { CreateBusinessBasicSchema } from "@/validations/businessValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -100,6 +101,7 @@ const CreateShopForm = ({ onClose }: CreateShopFormProps) => {
   const geocoderRef = useRef<any>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const geolocationInitializedRef = useRef(false);
+  const geolocationRetriedRef = useRef(false);
   const pendingGeocodeRef = useRef<{ lat: number; lng: number } | null>(null);
   const [geocoderReady, setGeocoderReady] = useState(false);
   const {
@@ -307,30 +309,49 @@ const CreateShopForm = ({ onClose }: CreateShopFormProps) => {
     if (!navigator.geolocation) return;
 
     geolocationInitializedRef.current = true;
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        // alert("wtf");
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        let name = await getAddress(lat, lng);
-        setValue("address", name, {
-          shouldValidate: false,
-        });
-        setValue("latitude", lat);
-        setValue("longitude", lng);
+    const applyLocation = async (position: GeolocationPosition) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      let name = await getAddress(lat, lng);
+      setValue("address", name, {
+        shouldValidate: false,
+      });
+      setValue("latitude", lat);
+      setValue("longitude", lng);
 
-        mapRef.current?.panTo({ lat, lng });
-        mapRef.current?.setZoom(15);
-        if (geocoderReady) {
-          syncAddressFromLatLng(lat, lng);
-        } else {
-          pendingGeocodeRef.current = { lat, lng };
-        }
-      },
-      () => {
-        // Keep fallback center if permission denied.
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
+      mapRef.current?.panTo({ lat, lng });
+      mapRef.current?.setZoom(15);
+      if (geocoderReady) {
+        syncAddressFromLatLng(lat, lng);
+      } else {
+        pendingGeocodeRef.current = { lat, lng };
+      }
+    };
+
+    const handleLocationError = (error: GeolocationPositionError) => {
+      // CoreLocation can return POSITION_UNAVAILABLE intermittently; retry once with relaxed options.
+      if (
+        error.code === error.POSITION_UNAVAILABLE &&
+        !geolocationRetriedRef.current
+      ) {
+        geolocationRetriedRef.current = true;
+        navigator.geolocation.getCurrentPosition(
+          applyLocation,
+          () => {
+            // Keep fallback center if location remains unavailable.
+          },
+          { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 },
+        );
+        return;
+      }
+
+      // Keep fallback center if permission denied or location is unavailable.
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      applyLocation,
+      handleLocationError,
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }, [isLoaded, geocoderReady, setValue]);
 
@@ -808,7 +829,7 @@ const CreateShopForm = ({ onClose }: CreateShopFormProps) => {
                         className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
                       >
                         <span className="font-medium text-slate-800">
-                          {service.name}
+                          {formatLaundryServiceType(service.name)}
                         </span>
                         <span className="text-sm font-semibold text-slate-600">
                           ${service.price} {formatUnitType(service.unitType)}

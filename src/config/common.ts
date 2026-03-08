@@ -8,3 +8,5 @@ export const UoM = {
   per_kg: "Kg",
   per_item: "Per Item",
 };
+
+export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;

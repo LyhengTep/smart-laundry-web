@@ -1,17 +1,24 @@
 "use client";
 
 import { BusinessShopCard } from "@/components/BusinessShopCard";
+import { DialogCtx } from "@/contexts/DialogProvider";
+import { ToastContext } from "@/contexts/ToastProvider";
 import { useBusinesses } from "@/hooks/businesses/businessHook";
+import { deleteBusiness } from "@/services/businessService";
 import { Business } from "@/types/business";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-
+import { useContext, useState } from "react";
 const MultiShopManager = () => {
   const [view, setView] = useState("selector"); // 'selector' or 'dashboard'
   const [selectedShop, setSelectedShop] = useState<Partial<Business>>({});
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const toastCtx = useContext(ToastContext);
+  const dialogCtx = useContext(DialogCtx);
+
   // Mock Data: Your Portfolio of Shops
   const myShops = [
     {
@@ -37,6 +44,44 @@ const MultiShopManager = () => {
   };
 
   const { data, isLoading, error } = useBusinesses();
+  const removeBusinessMutation = useMutation({
+    mutationFn: (id: string) => deleteBusiness(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["businesses"],
+        refetchType: "active",
+      });
+      toastCtx?.setToast?.({
+        error: false,
+        message: "Shop removed successfully.",
+      });
+      toastCtx?.setIsVisible(true);
+    },
+    onError: () => {
+      toastCtx?.setToast?.({
+        error: true,
+        message: "Failed to remove shop.",
+      });
+      toastCtx?.setIsVisible(true);
+    },
+  });
+
+  const handleRemoveShop = (shop: Business) => {
+    dialogCtx.open({
+      title: "Remove this shop?",
+      description: (
+        <>
+          This will remove <strong>{shop.name}</strong>. This action cannot be
+          undone.
+        </>
+      ),
+      confirmLabel: "Yes, Remove",
+      tone: "danger",
+      onConfirm: () => {
+        removeBusinessMutation.mutate(shop.id);
+      },
+    });
+  };
 
   console.log("Fetched Businesses:", data);
 
@@ -66,6 +111,11 @@ const MultiShopManager = () => {
               key={shop.id}
               shop={shop}
               onSelect={handleSelectShop}
+              onRemove={handleRemoveShop}
+              removing={
+                removeBusinessMutation.isPending &&
+                removeBusinessMutation.variables === shop.id
+              }
             />
           ))}
 
