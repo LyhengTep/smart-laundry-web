@@ -67,6 +67,17 @@ const normalizePricingType = (
 };
 
 const toApiTime = (value: string) => `${value}:00.000Z`;
+const resolveImageUrl = (value?: string) => {
+  if (!value) return "";
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+  return `${BASE_URL}${value}`;
+};
 
 const mapServicesToForm = (
   allServices: Array<{ id: number; name: string }>,
@@ -164,7 +175,6 @@ const ShopProfilePage = () => {
 
   useEffect(() => {
     if (!business || !laundryServices?.length) return;
-    console.log("business data", business);
     const offered =
       business.services?.map((item) => ({
         service_id: item.service_id,
@@ -226,6 +236,7 @@ const ShopProfilePage = () => {
   const onSubmit = async (values: EditBusinessForm) => {
     if (!business) return;
     let coverUrl = business.cover_image_url || "";
+
     if (values.image) {
       const uploaded = await uploadCover.mutateAsync(values.image);
       coverUrl = uploaded.url;
@@ -381,7 +392,7 @@ const ShopProfilePage = () => {
                 <div className="rounded-xl border border-slate-200 p-3 bg-slate-50">
                   {coverPreview ? (
                     <img
-                      src={BASE_URL + coverPreview}
+                      src={resolveImageUrl(coverPreview)}
                       alt="Cover preview"
                       className="w-full h-44 object-cover rounded-lg border border-slate-200"
                     />
@@ -479,7 +490,7 @@ const ShopProfilePage = () => {
           <div className="relative h-64 bg-slate-200">
             {business.cover_image_url ? (
               <img
-                src={BASE_URL + business.cover_image_url}
+                src={resolveImageUrl(business.cover_image_url)}
                 className="w-full h-full object-cover"
                 alt="Cover"
               />
@@ -490,9 +501,17 @@ const ShopProfilePage = () => {
           </div>
           <div className="p-8 flex items-end gap-6 -mt-12 relative">
             <div className="w-32 h-32 bg-white rounded-[2rem] p-1 shadow-xl">
-              <div className="w-full h-full bg-blue-600 rounded-[1.8rem] flex items-center justify-center text-white">
-                <Store size={48} />
-              </div>
+              {business.profile_image_url ? (
+                <img
+                  src={resolveImageUrl(business.profile_image_url)}
+                  className="w-full h-full rounded-[1.8rem] object-cover"
+                  alt="Profile"
+                />
+              ) : (
+                <div className="w-full h-full bg-blue-600 rounded-[1.8rem] flex items-center justify-center text-white">
+                  <Store size={48} />
+                </div>
+              )}
             </div>
             <div className="pb-2">
               <h2 className="text-3xl font-black text-slate-900">

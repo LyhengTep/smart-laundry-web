@@ -17,6 +17,10 @@ export interface Business {
   cover_image_url: string;
   rating_avg: number;
   business_license_number: string;
+  open_time?: string;
+  close_time?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface BusinessListResponse {

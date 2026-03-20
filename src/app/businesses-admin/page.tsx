@@ -39,7 +39,7 @@ const MultiShopManager = () => {
 
   const handleSelectShop = (shop: Business) => {
     setSelectedShop(shop);
-    router.push(`/businesses/${shop.id}/view`);
+    router.push(`/businesses-admin/${shop.id}/view`);
     // setView("dashboard");
   };
 

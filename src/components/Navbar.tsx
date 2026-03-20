@@ -9,6 +9,10 @@ interface NavProps {
   onLogout?: () => void;
 }
 export default function Navbar(props: NavProps) {
+  const myOrdersHref = props.user
+    ? `/customers/${props.user.id}/my-orders`
+    : "/auth/login";
+
   return (
     <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +42,7 @@ export default function Navbar(props: NavProps) {
             <Link href="#shops" className="hover:text-blue-600 transition">
               Browse Shops
             </Link>
-            <Link href="/orders" className="hover:text-blue-600 transition">
+            <Link href={myOrdersHref} className="hover:text-blue-600 transition">
               My Orders
             </Link>
           </div>

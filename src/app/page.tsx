@@ -1,49 +1,84 @@
 "use client";
 
+import Navbar from "@/components/Navbar";
+import { BASE_URL } from "@/config/common";
 import { STORAGE_KEYS } from "@/config/common";
-import { ToastContext } from "@/contexts/ToastProvider";
+import { useBusinesses } from "@/hooks/businesses/businessHook";
 import { useLocalStorage } from "@/hooks/localStorage";
-import dynamic from "next/dynamic";
-import { useContext, useEffect } from "react";
-const Navbar = dynamic(() => import("@/components/Navbar"), { ssr: false });
+import { Business } from "@/types/business";
+import { Clock3, MapPin, Star } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+const toTimeMinutes = (value?: string) => {
+  if (!value) return null;
+  const date = new Date(`1970-01-01T${value}`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getUTCHours() * 60 + date.getUTCMinutes();
+};
+
+const formatTime = (value?: string) => {
+  if (!value) return "-";
+  const date = new Date(`1970-01-01T${value}`);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const isAvailableBusiness = (status?: string) => {
+  const normalized = (status || "").toUpperCase();
+  return (
+    normalized === "ACTIVE" ||
+    normalized === "APPROVED" ||
+    normalized === "OPEN"
+  );
+};
+
+const isOpenNow = (business: Business) => {
+  if (!isAvailableBusiness(business.status)) return false;
+
+  const open = toTimeMinutes(business.open_time);
+  const close = toTimeMinutes(business.close_time);
+  if (open === null || close === null) return true;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  if (open === close) return true;
+  if (close > open) return currentMinutes >= open && currentMinutes < close;
+  return currentMinutes >= open || currentMinutes < close;
+};
+
+const DEFAULT_SHOP_IMAGE =
+  "https://images.unsplash.com/photo-1545173168-9f1947e8017e?q=80&w=1200";
+
+const resolveBusinessImage = (value?: string) => {
+  if (!value || value === "string") return DEFAULT_SHOP_IMAGE;
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+  return `${BASE_URL}${value}`;
+};
+
 export default function Home() {
   const { value, setValue } = useLocalStorage(STORAGE_KEYS.AUTH_USER, null);
+  const { data, isLoading, isError } = useBusinesses({ page: 1, size: 12 });
+  const [showOpenOnly, setShowOpenOnly] = useState(false);
 
-  const toastCtx = useContext(ToastContext);
-
-  useEffect(() => {
-    // toastCtx.setIsVisible(true);
-  }, []);
-  // Demo Data (In a real app, this comes from your database/ERD)
-  const shops = [
-    {
-      name: "Bubbles & Suds",
-      address: "123 University Ave, Campus North",
-      rating: 4.8,
-      status: "OPEN" as const,
-      distance: "0.8km",
-      image:
-        "https://images.unsplash.com/photo-1545173168-9f1947e8017e?q=80&w=600",
-    },
-    {
-      name: "Eco-Clean Hub",
-      address: "45 Station Road",
-      rating: 4.5,
-      status: "CLOSED" as const,
-      distance: "1.2km",
-      image:
-        "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=600",
-    },
-    {
-      name: "Prime Press",
-      address: "West Campus Gate",
-      rating: 4.9,
-      status: "OPEN" as const,
-      distance: "0.5km",
-      image:
-        "https://images.unsplash.com/photo-1489274495744-85ff17e7ad6d?q=80&w=600",
-    },
-  ];
+  const shops = useMemo(() => {
+    const available = (data?.items || []).filter((business) =>
+      isAvailableBusiness(business.status),
+    );
+    return showOpenOnly
+      ? available.filter((business) => isOpenNow(business))
+      : available;
+  }, [data?.items, showOpenOnly]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -54,18 +89,16 @@ export default function Home() {
         }}
       />
 
-      {/* Hero Section */}
       <header className="bg-white pt-12 pb-20 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight">
             Laundry Day, <span className="text-blue-600">Simplified.</span>
           </h1>
           <p className="text-lg text-slate-600 mb-10 max-w-2xl mx-auto">
-            Choose from the best shops on campus. High-quality cleaning,
-            automated tracking.
+            Choose from available shops near your location with clear business
+            hours and pickup convenience.
           </p>
 
-          {/* Tracking Search */}
           <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-2 border border-slate-100 flex flex-col md:flex-row gap-2">
             <input
               type="text"
@@ -79,7 +112,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Shop Browser Section */}
       <section id="shops" className="max-w-7xl mx-auto px-4 py-16">
         <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
           <div>
@@ -87,27 +119,56 @@ export default function Home() {
               Recommended Shops
             </h2>
             <p className="text-slate-500">
-              Based on your location and top ratings
+              {isLoading
+                ? "Loading businesses..."
+                : `${shops.length} shop(s) available`}
             </p>
           </div>
           <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+            <button
+              onClick={() => setShowOpenOnly(false)}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+                !showOpenOnly
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
               All
             </button>
-            <button className="text-slate-500 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 transition">
+            <button
+              onClick={() => setShowOpenOnly(true)}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+                showOpenOnly
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
               Open Now
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {shops.map((shop, index) => (
-            <ShopCard key={index} {...shop} />
-          ))}
-        </div>
+        {isError && (
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-red-700">
+            Failed to load businesses. Please try again.
+          </div>
+        )}
+
+        {!isError && !isLoading && shops.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-500">
+            No available shops found.
+          </div>
+        )}
+
+        {!isError && shops.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {shops.map((shop) => (
+              <ShopCard key={shop.id} shop={shop} />
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Business Owner CTA */}
       <section className="max-w-7xl mx-auto px-4 pb-20">
         <div className="bg-blue-600 rounded-[3rem] p-12 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
           <div className="text-white">
@@ -127,147 +188,73 @@ export default function Home() {
   );
 }
 
-interface ShopProps {
-  name: string;
-  address: string;
-  rating: number;
-  status: "OPEN" | "CLOSED";
-  distance: string;
-  image: string;
-}
-
-function ShopCard({
-  name,
-  address,
-  rating,
-  status,
-  distance,
-  image,
-}: ShopProps) {
-  const isOpen = status === "OPEN";
+function ShopCard({ shop }: { shop: Business }) {
+  const open = isOpenNow(shop);
+  const imageUrl = resolveBusinessImage(
+    shop.cover_image_url || shop.profile_image_url,
+  );
 
   return (
-    <div
-      className={`bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col ${
-        !isOpen && "opacity-80"
-      }`}
+    <article
+      className={`group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col ${
+        !open && "opacity-80"
+      } hover:-translate-y-0.5`}
     >
-      <div className="relative h-48">
-        <img
-          src={image}
-          className={`w-full h-full object-cover ${!isOpen && "grayscale"}`}
-          alt={name}
-        />
-        <span className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-blue-600 shadow-sm">
-          {distance} away
-        </span>
-        <span
-          className={`absolute top-4 right-4 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider ${
-            isOpen ? "bg-green-500" : "bg-slate-500"
-          }`}
-        >
-          {status}
-        </span>
-      </div>
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold text-slate-800">{name}</h3>
-          <div className="flex items-center gap-1 text-amber-500 font-bold">
-            <span className="text-sm">★ {rating}</span>
-          </div>
+      <Link href={`/businesses/${shop.id}`} className="block">
+        <div className="relative h-48">
+          <img
+            src={imageUrl}
+            className={`w-full h-full object-cover ${!open && "grayscale"}`}
+            alt={shop.name}
+            onError={(e) => {
+              if (e.currentTarget.src === DEFAULT_SHOP_IMAGE) return;
+              e.currentTarget.src = DEFAULT_SHOP_IMAGE;
+            }}
+          />
+          <span
+            className={`absolute top-4 right-4 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider ${
+              open ? "bg-green-500" : "bg-slate-500"
+            }`}
+          >
+            {open ? "OPEN" : "CLOSED"}
+          </span>
         </div>
-        <p className="text-slate-500 text-sm mb-6 line-clamp-1">{address}</p>
+        <div className="p-6 flex flex-1 flex-col">
+          <div className="flex justify-between items-start mb-2 gap-2">
+            <h3 className="text-xl font-bold text-slate-800 line-clamp-1">
+              {shop.name}
+            </h3>
+            <div className="flex items-center gap-1 text-amber-500 font-bold shrink-0">
+              <Star size={14} fill="currentColor" />
+              <span className="text-sm">{(shop.rating_avg ?? 0).toFixed(1)}</span>
+            </div>
+          </div>
 
-        <button
-          disabled={!isOpen}
-          className={`w-full py-3 font-bold rounded-2xl transition-all ${
-            isOpen
+          <p className="text-slate-500 text-sm mb-2 line-clamp-2 flex items-start gap-2">
+            <MapPin size={14} className="mt-0.5 shrink-0 text-slate-400" />
+            <span>{shop.address || "-"}</span>
+          </p>
+          <p className="text-slate-500 text-sm flex items-center gap-2">
+            <Clock3 size={14} className="shrink-0 text-slate-400" />
+            <span>
+              {formatTime(shop.open_time)} - {formatTime(shop.close_time)}
+            </span>
+          </p>
+        </div>
+      </Link>
+
+      <div className="px-6 pb-6 mt-auto">
+        <Link
+          href={`/businesses/${shop.id}/order`}
+          className={`w-full py-3 font-bold rounded-2xl transition-all flex items-center justify-center text-center ${
+            open
               ? "bg-slate-900 text-white hover:bg-blue-600"
-              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+              : "bg-slate-100 text-slate-500 hover:bg-slate-200"
           }`}
         >
-          {isOpen ? "Book Laundry" : "Check Back Later"}
-        </button>
+          Order Now
+        </Link>
       </div>
-    </div>
+    </article>
   );
 }
-
-// interface NavProps {
-//   user?: UserAuthResponse | null;
-//   onLogout?: () => void;
-// }
-// function Navbar(props: NavProps) {
-//   return (
-//     <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-//         <div className="flex justify-between h-16 items-center">
-//           <Link href="/" className="flex items-center gap-2">
-//             <div className="bg-blue-600 p-2 rounded-lg text-white">
-//               <svg
-//                 xmlns="http://www.w3.org/2000/svg"
-//                 className="h-6 w-6"
-//                 fill="none"
-//                 viewBox="0 0 24 24"
-//                 stroke="currentColor"
-//               >
-//                 <path
-//                   strokeLinecap="round"
-//                   strokeLinejoin="round"
-//                   strokeWidth={2}
-//                   d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-//                 />
-//               </svg>
-//             </div>
-//             <span className="text-xl font-bold text-slate-800 tracking-tight">
-//               SmartWash
-//             </span>
-//           </Link>
-//           <div className="hidden md:flex space-x-8 text-slate-600 font-medium">
-//             <Link href="#shops" className="hover:text-blue-600 transition">
-//               Browse Shops
-//             </Link>
-//             <Link href="/orders" className="hover:text-blue-600 transition">
-//               My Orders
-//             </Link>
-//           </div>
-
-//           <div className="flex items-center gap-4">
-//             {props.user ? (
-//               <>
-//                 <Link
-//                   href="/user/profile"
-//                   className="flex text-slate-600 font-medium hover:text-blue-600 transition"
-//                 >
-//                   <User className="mx-1" />
-//                   My Profile
-//                 </Link>
-//                 <button
-//                   onClick={props?.onLogout}
-//                   className="bg-red-600 text-white px-5 py-2 rounded-full hover:bg-red-700 transition shadow-lg shadow-red-100 font-semibold"
-//                 >
-//                   Log out
-//                 </button>
-//               </>
-//             ) : (
-//               <>
-//                 <Link
-//                   href="/auth/login"
-//                   className="text-slate-600 font-medium hover:text-blue-600 transition"
-//                 >
-//                   Login
-//                 </Link>
-//                 <Link
-//                   href="/auth/signup"
-//                   className="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-100 font-semibold"
-//                 >
-//                   Sign Up
-//                 </Link>
-//               </>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// }
