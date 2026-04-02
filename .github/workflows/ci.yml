@@ -22,3 +22,10 @@ jobs:
 
       - name: Push Docker Image
         run: docker push lyheng/smart-laundry-web:${{ github.sha }}
+
+      - name: Notify Success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELE_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELE_CHAT_ID }} \
+          -d text="✅ Build succeeded"
