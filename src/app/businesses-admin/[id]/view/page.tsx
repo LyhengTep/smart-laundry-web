@@ -1,12 +1,32 @@
 "use client";
 import { Bell, CheckCircle2, Clock, Plus } from "lucide-react";
-import { useState } from "react";
+import { ReactNode } from "react";
+
+type QueueStatus = "Processing" | "Pending" | "Ready";
+
+interface ActiveOrder {
+  id: string;
+  customer: string;
+  service: string;
+  weight: string;
+  status: QueueStatus;
+  time: string;
+}
+
+interface StatCardProps {
+  label: string;
+  value: string;
+  trend: string;
+  icon: ReactNode;
+}
+
+interface StatusBadgeProps {
+  status: QueueStatus;
+}
 
 const BusinessDashboard = () => {
-  const [isShopOpen, setIsShopOpen] = useState(true);
-
   // Mock Data for the Order Table
-  const activeOrders = [
+  const activeOrders: ActiveOrder[] = [
     {
       id: "ORD-124",
       customer: "Alex Rivera",
@@ -151,16 +171,7 @@ const BusinessDashboard = () => {
 };
 
 // Helper Components
-const NavItem = ({ icon, label, active = false }) => (
-  <button
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-500 hover:bg-gray-100"}`}
-  >
-    {icon}
-    <span>{label}</span>
-  </button>
-);
-
-const StatCard = ({ label, value, trend, icon }) => (
+const StatCard = ({ label, value, trend, icon }: StatCardProps) => (
   <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
     <div className="flex items-center justify-between mb-4">
       <div className="p-2 bg-blue-50 rounded-lg">{icon}</div>
@@ -173,8 +184,8 @@ const StatCard = ({ label, value, trend, icon }) => (
   </div>
 );
 
-const StatusBadge = ({ status }) => {
-  const styles = {
+const StatusBadge = ({ status }: StatusBadgeProps) => {
+  const styles: Record<QueueStatus, string> = {
     Processing: "bg-blue-100 text-blue-600",
     Pending: "bg-orange-100 text-orange-600",
     Ready: "bg-green-100 text-green-600",

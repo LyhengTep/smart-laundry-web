@@ -8,7 +8,13 @@ import { APP_NAME, STORAGE_KEYS } from "@/config/common";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { login } from "@/services/authService";
+import { registerDeviceToken } from "@/services/deviceTokenService";
+import {
+  getFcmToken,
+  requestFirebaseNotificationPermission,
+} from "@/services/firebaseMessaging";
 import { LoginDTO, UserAuthResponse } from "@/types/auth";
+import { toToastMessage } from "@/utils/toast";
 import { LoginForm } from "@/validations/authValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -46,6 +52,15 @@ const setEmpty = (setValue: UseFormSetValue<FormValues>) => {
 };
 
 type FormValues = z.infer<typeof LoginForm>;
+
+const detectDeviceType = () => {
+  if (typeof navigator === "undefined") return "web";
+  const ua = navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(ua)) return "ios";
+  if (/android/.test(ua)) return "android";
+  return "web";
+};
+
 export default function LoginPage() {
   const toastCtx = useContext(ToastContext);
   const [role, setRole] = useState<RoleKeys>("CUSTOMER");
@@ -64,33 +79,75 @@ export default function LoginPage() {
     STORAGE_KEYS.AUTH_USER,
     null,
   );
+  // const { setValue: setDriverProfile } = useLocalStorage<DriverResponse>(
+  //   STORAGE_KEYS.DRIVER_PROFILE,
+  //   null,
+  // );
 
   useEffect(() => {
     setFormValue("role", role);
-  }, [role]);
+  }, [role, setFormValue]);
   const { mutate } = useMutation({
     mutationFn: login,
     onError: (e) => {
       console.log("Error on login", e);
 
       const message = axios.isAxiosError(e)
-        ? ((e.response?.data as any)?.detail ?? e.message)
+        ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
         : e instanceof Error
           ? e.message
           : "Something went wrong";
-      toastCtx?.setToast &&
-        toastCtx?.setToast({
+      if (toastCtx?.setToast) {
+        toastCtx.setToast({
           error: true,
-          message: message,
+          message: toToastMessage(message),
         });
-      toastCtx.setIsVisible(true);
+      }
+      toastCtx?.setIsVisible(true);
     },
 
-    onSuccess: (value) => {
+    onSuccess: async (value) => {
       console.log("value return from the server", value);
       setValue(value);
+      if (value.role === "DRIVER") {
+        try {
+          // const profile = await getDriverByUserId(value.id);
+          // setDriverProfile(profile);
+
+          const permission = await requestFirebaseNotificationPermission();
+          if (permission === "granted") {
+            const fcmToken = await getFcmToken();
+            console.log("Obtained FCM token:", fcmToken);
+            if (fcmToken) {
+              let res = await registerDeviceToken({
+                user_id: value.id,
+                driver_id: value?.driver?.id || null,
+                token: fcmToken,
+                device_type: detectDeviceType(),
+              });
+
+              console.log("Device token registered:", res);
+            }
+          }
+        } catch (e) {
+          console.log("Failed to load/register driver profile token", e);
+          // setDriverProfile(null);
+        }
+      } else {
+        // setDriverProfile(null);
+      }
+
       toastCtx.setIsVisible(true);
       setTimeout(() => {
+        if (value.role === "MERCHANT") {
+          router.push("/businesses-admin");
+          return;
+        }
+
+        if (value.role === "DRIVER") {
+          router.push("/drivers/tasks");
+          return;
+        }
         router.push("/");
       }, 1000);
     },
@@ -99,7 +156,7 @@ export default function LoginPage() {
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     try {
       console.log("Form Data --->", data);
-      let payload: LoginDTO = {
+      const payload: LoginDTO = {
         login: data.login,
         password: data.password,
         role: data.role,

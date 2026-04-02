@@ -23,7 +23,7 @@ describe("OrdersTable", () => {
     onSearchFieldChange: jest.fn(),
     statusFilter: "",
     onStatusFilterChange: jest.fn(),
-    statusOptions: ["PENDING", "COMPLETED"],
+    statusOptions: ["PENDING", "DELIVERED"],
   };
 
   it("shows section title based on active section", () => {

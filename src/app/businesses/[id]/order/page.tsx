@@ -11,7 +11,12 @@ import { CreateOrderRequest } from "@/types/order";
 import { toToastMessage } from "@/utils/toast";
 import { CreateOrderSchema } from "@/validations/orderValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Autocomplete, GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
+import {
+  Autocomplete,
+  GoogleMap,
+  MarkerF,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -85,6 +90,29 @@ const safeLatLng = (lat?: number, lng?: number): LatLng | null => {
   return { lat, lng };
 };
 
+const toDateTimeLocalValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+};
+
+const getDefaultSchedule = () => {
+  const pickup = new Date();
+  pickup.setHours(pickup.getHours() + 1);
+  pickup.setMinutes(0, 0, 0);
+
+  const dropoff = new Date(pickup);
+  dropoff.setDate(dropoff.getDate() + 1);
+
+  return {
+    pickup: toDateTimeLocalValue(pickup),
+    dropoff: toDateTimeLocalValue(dropoff),
+  };
+};
+
 const CustomerOrderPage = () => {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -101,9 +129,8 @@ const CustomerOrderPage = () => {
     libraries: ["places"],
   });
 
-  const [locationModalTarget, setLocationModalTarget] = useState<MapTarget | null>(
-    null,
-  );
+  const [locationModalTarget, setLocationModalTarget] =
+    useState<MapTarget | null>(null);
   const [pickerPosition, setPickerPosition] = useState<LatLng>(DEFAULT_CENTER);
   const [pickerAddress, setPickerAddress] = useState("");
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
@@ -127,14 +154,19 @@ const CustomerOrderPage = () => {
     resolver: zodResolver(CreateOrderSchema),
     mode: "onTouched",
     defaultValues: {
+      ...(() => {
+        const defaults = getDefaultSchedule();
+        return {
+          scheduledPickupAt: defaults.pickup,
+          scheduledDropoffAt: defaults.dropoff,
+        };
+      })(),
       pickupAddress: "",
       deliveryAddress: "",
       pickupLatitude: 0,
       pickupLongitude: 0,
       deliveryLatitude: 0,
       deliveryLongitude: 0,
-      scheduledPickupAt: "",
-      scheduledDropoffAt: "",
       notes: "",
       discount: 0,
       services: [],
@@ -143,6 +175,7 @@ const CustomerOrderPage = () => {
 
   useEffect(() => {
     if (!business) return;
+    const defaults = getDefaultSchedule();
 
     reset({
       pickupAddress: "",
@@ -151,8 +184,8 @@ const CustomerOrderPage = () => {
       pickupLongitude: 0,
       deliveryLatitude: 0,
       deliveryLongitude: 0,
-      scheduledPickupAt: "",
-      scheduledDropoffAt: "",
+      scheduledPickupAt: defaults.pickup,
+      scheduledDropoffAt: defaults.dropoff,
       notes: "",
       discount: 0,
       services: (business.services || []).map((service) => ({
@@ -228,10 +261,12 @@ const CustomerOrderPage = () => {
   const selectedCount = services.filter((service) => service.selected).length;
 
   const openLocationModal = (target: MapTarget) => {
-    const latField = target === "pickup" ? "pickupLatitude" : "deliveryLatitude";
+    const latField =
+      target === "pickup" ? "pickupLatitude" : "deliveryLatitude";
     const lngField =
       target === "pickup" ? "pickupLongitude" : "deliveryLongitude";
-    const addressField = target === "pickup" ? "pickupAddress" : "deliveryAddress";
+    const addressField =
+      target === "pickup" ? "pickupAddress" : "deliveryAddress";
 
     const existing = safeLatLng(getValues(latField), getValues(lngField));
     setPickerPosition(existing || DEFAULT_CENTER);
@@ -279,8 +314,12 @@ const CustomerOrderPage = () => {
       setValue("pickupLongitude", pickerPosition.lng, { shouldValidate: true });
     } else {
       setValue("deliveryAddress", pickerAddress, { shouldValidate: true });
-      setValue("deliveryLatitude", pickerPosition.lat, { shouldValidate: true });
-      setValue("deliveryLongitude", pickerPosition.lng, { shouldValidate: true });
+      setValue("deliveryLatitude", pickerPosition.lat, {
+        shouldValidate: true,
+      });
+      setValue("deliveryLongitude", pickerPosition.lng, {
+        shouldValidate: true,
+      });
     }
 
     setLocationModalTarget(null);
@@ -374,7 +413,7 @@ const CustomerOrderPage = () => {
 
   if (isBusinessLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 p-8 text-slate-500">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8 text-slate-500 dark:text-slate-400">
         Loading services...
       </div>
     );
@@ -384,18 +423,18 @@ const CustomerOrderPage = () => {
     <>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="min-h-screen bg-slate-50/50 pb-32"
+        className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32"
       >
-        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30 p-4">
+        <div className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30 p-4">
           <div className="max-w-2xl mx-auto flex items-center gap-4">
             <button
               type="button"
               onClick={() => router.back()}
-              className="p-2 hover:bg-slate-100 rounded-xl transition-all"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
             >
               <ArrowLeft size={20} />
             </button>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
               Create Order
             </h1>
           </div>
@@ -417,7 +456,10 @@ const CustomerOrderPage = () => {
                 const isSelected = service.selected;
                 return (
                   <div
-                    key={service.business_service_id || `${service.service_name}-${index}`}
+                    key={
+                      service.business_service_id ||
+                      `${service.service_name}-${index}`
+                    }
                     onClick={() =>
                       setValue(`services.${index}.selected`, !isSelected, {
                         shouldValidate: true,
@@ -443,7 +485,8 @@ const CustomerOrderPage = () => {
                             {service.service_name}
                           </p>
                           <p className="text-xs font-bold text-slate-400">
-                            ${service.unit_price.toFixed(2)} / {service.measure_type}
+                            ${service.unit_price.toFixed(2)} /{" "}
+                            {service.measure_type}
                           </p>
                         </div>
                       </div>
@@ -463,17 +506,17 @@ const CustomerOrderPage = () => {
                       </div>
                     </div>
 
-                  {isSelected && (
-                    <div
-                      className="mt-4 space-y-3"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="rounded-2xl bg-blue-50 px-4 py-2.5 text-xs font-semibold text-blue-700">
-                        Quantity will be measured later at the store.
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2">
-                          Note
+                    {isSelected && (
+                      <div
+                        className="mt-4 space-y-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="rounded-2xl bg-blue-50 px-4 py-2.5 text-xs font-semibold text-blue-700">
+                          Quantity will be measured later at the store.
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 uppercase ml-2">
+                            Note
                           </label>
                           <input
                             type="text"
@@ -489,15 +532,17 @@ const CustomerOrderPage = () => {
               })}
             </div>
             {errors.services?.message && (
-              <p className="text-red-600 text-sm px-2">{errors.services.message}</p>
+              <p className="text-red-600 text-sm px-2">
+                {errors.services.message}
+              </p>
             )}
           </section>
 
           <section className="space-y-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">
+            <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">
               Pickup & Delivery
             </h3>
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800">
               <div className="space-y-1 relative">
                 <div className="relative z-10">
                   <div className="absolute left-4 top-4 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
@@ -507,12 +552,12 @@ const CustomerOrderPage = () => {
                     type="text"
                     {...register("pickupAddress")}
                     placeholder="Pickup Address (e.g. Block B, Room 302)"
-                    className="w-full pl-14 pr-14 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm"
+                    className="w-full pl-14 pr-14 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm dark:text-slate-100"
                   />
                   <button
                     type="button"
                     onClick={() => openLocationModal("pickup")}
-                    className="absolute right-3 top-2.5 p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                    className="absolute right-3 top-2.5 p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800"
                     aria-label="Pick pickup location from map"
                   >
                     <MapPin size={18} />
@@ -536,12 +581,12 @@ const CustomerOrderPage = () => {
                     type="text"
                     {...register("deliveryAddress")}
                     placeholder="Delivery Address (Leave blank if same as pickup)"
-                    className="w-full pl-14 pr-14 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm"
+                    className="w-full pl-14 pr-14 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm dark:text-slate-100"
                   />
                   <button
                     type="button"
                     onClick={() => openLocationModal("delivery")}
-                    className="absolute right-3 top-2.5 p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                    className="absolute right-3 top-2.5 p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800"
                     aria-label="Pick delivery location from map"
                   >
                     <MapPin size={18} />
@@ -549,20 +594,20 @@ const CustomerOrderPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2">
                     Pickup Time
                   </label>
-                  <div className="relative">
+                  <div className="relative min-w-0 p-2">
                     <Calendar
-                      className="absolute left-4 top-3.5 text-slate-400"
-                      size={18}
+                      className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
                     />
                     <input
                       type="datetime-local"
                       {...register("scheduledPickupAt")}
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold outline-none"
+                      className="w-full min-w-0 pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-xs sm:text-sm font-semibold outline-none dark:text-slate-100"
                     />
                   </div>
                   {errors.scheduledPickupAt && (
@@ -571,19 +616,19 @@ const CustomerOrderPage = () => {
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2">
                     Expected Drop-off
                   </label>
-                  <div className="relative">
+                  <div className="relative min-w-0">
                     <Clock
-                      className="absolute left-4 top-3.5 text-slate-400"
-                      size={18}
+                      className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
                     />
                     <input
                       type="datetime-local"
                       {...register("scheduledDropoffAt")}
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold outline-none"
+                      className="w-full min-w-0 pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-xs sm:text-sm font-semibold outline-none dark:text-slate-100"
                     />
                   </div>
                   {errors.scheduledDropoffAt && (
@@ -597,7 +642,7 @@ const CustomerOrderPage = () => {
           </section>
 
           <section className="space-y-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">
+            <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">
               Special Notes
             </h3>
             <div className="relative">
@@ -608,34 +653,46 @@ const CustomerOrderPage = () => {
               <textarea
                 {...register("notes")}
                 placeholder="Ex: Separate whites, extra softener, or fragile items..."
-                className="w-full pl-14 pr-6 py-5 bg-white border border-slate-100 rounded-[2.5rem] h-32 shadow-sm focus:ring-2 focus:ring-blue-600 outline-none font-medium resize-none"
+                className="w-full pl-14 pr-6 py-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] h-32 shadow-sm focus:ring-2 focus:ring-blue-600 outline-none font-medium resize-none dark:text-slate-100"
               />
             </div>
           </section>
 
-          <input type="hidden" {...register("pickupLatitude", { valueAsNumber: true })} />
-          <input type="hidden" {...register("pickupLongitude", { valueAsNumber: true })} />
-          <input type="hidden" {...register("deliveryLatitude", { valueAsNumber: true })} />
-          <input type="hidden" {...register("deliveryLongitude", { valueAsNumber: true })} />
+          <input
+            type="hidden"
+            {...register("pickupLatitude", { valueAsNumber: true })}
+          />
+          <input
+            type="hidden"
+            {...register("pickupLongitude", { valueAsNumber: true })}
+          />
+          <input
+            type="hidden"
+            {...register("deliveryLatitude", { valueAsNumber: true })}
+          />
+          <input
+            type="hidden"
+            {...register("deliveryLongitude", { valueAsNumber: true })}
+          />
 
           <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100 flex gap-4 items-start">
             <div className="bg-white p-2 rounded-xl text-blue-600 shadow-sm">
               <Info size={20} />
             </div>
             <p className="text-xs text-blue-700/80 font-semibold leading-relaxed">
-              Final pricing will be confirmed after your laundry is weighed at the
-              shop. You will be notified once it is processed.
+              Final pricing will be confirmed after your laundry is weighed at
+              the shop. You will be notified once it is processed.
             </p>
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-40">
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-40">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-6">
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
                 Services Selected
               </span>
-              <span className="text-lg font-black text-slate-900">
+              <span className="text-lg font-black text-slate-900 dark:text-slate-100">
                 {selectedCount} Types
               </span>
             </div>
@@ -644,7 +701,9 @@ const CustomerOrderPage = () => {
               disabled={selectedCount === 0 || createOrderMutation.isPending}
               className="flex-1 bg-blue-600 text-white font-black text-lg py-4 rounded-[1.8rem] shadow-xl shadow-blue-200 hover:bg-blue-700 disabled:bg-slate-200 disabled:shadow-none transition-all flex items-center justify-center gap-3"
             >
-              {createOrderMutation.isPending ? "Placing..." : "Confirm & Place Order"}
+              {createOrderMutation.isPending
+                ? "Placing..."
+                : "Confirm & Place Order"}
               <ChevronRight size={20} />
             </button>
           </div>
@@ -653,13 +712,15 @@ const CustomerOrderPage = () => {
 
       {locationModalTarget && (
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-black text-slate-900">{locationModalTitle}</h3>
+          <div className="w-full max-w-2xl rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                {locationModalTitle}
+              </h3>
               <button
                 type="button"
                 onClick={() => setLocationModalTarget(null)}
-                className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200"
               >
                 <X size={18} />
               </button>
@@ -682,21 +743,22 @@ const CustomerOrderPage = () => {
                       />
                       <Autocomplete
                         onLoad={(instance) => {
-                          autocompleteRef.current = instance as AutocompleteLike;
+                          autocompleteRef.current =
+                            instance as AutocompleteLike;
                         }}
                         onPlaceChanged={handlePlaceChanged}
                       >
                         <input
                           type="text"
                           placeholder="Search location"
-                          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 focus:ring-2 ring-blue-500 outline-none"
+                          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 ring-blue-500 outline-none dark:text-slate-100"
                         />
                       </Autocomplete>
                     </div>
                     <button
                       type="button"
                       onClick={handleUseCurrentLocation}
-                      className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200"
+                      className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700"
                     >
                       Current
                     </button>
@@ -719,7 +781,7 @@ const CustomerOrderPage = () => {
                     />
                   </GoogleMap>
 
-                  <div className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-600">
+                  <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                     {isResolvingLocation
                       ? "Resolving address..."
                       : pickerAddress || "No address selected"}
@@ -728,11 +790,11 @@ const CustomerOrderPage = () => {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setLocationModalTarget(null)}
-                className="px-4 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 font-semibold"
+                className="px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
               >
                 Cancel
               </button>

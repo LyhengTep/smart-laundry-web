@@ -2,8 +2,11 @@
 
 import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
+import { STORAGE_KEYS } from "@/config/common";
+import { useLocalStorage } from "@/hooks/localStorage";
 import { useOrders } from "@/hooks/orders/orderHook";
 import { updateOrderStatus } from "@/services/orderService";
+import { UserAuthResponse } from "@/types/auth";
 import { LaundryOrder } from "@/types/order";
 import { toToastMessage } from "@/utils/toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,11 +24,17 @@ import {
   Zap,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
 type OrderTab = "active" | "history";
 
-const HISTORY_STATUSES = new Set(["COMPLETED", "CANCELLED"]);
+const HISTORY_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
+const CANCELLABLE_STATUSES = new Set([
+  "PENDING",
+  "CONFIRMED",
+  "PICKUP_ASSIGNED",
+  "OUT_FOR_PICKUP",
+]);
 
 const formatMoney = (value?: number) => {
   if (typeof value !== "number") return "Pending weight...";
@@ -61,7 +70,7 @@ const isPendingPrice = (order: LaundryOrder) => {
 };
 
 const mapStatusLabel = (status: string) => {
-  if (status === "COMPLETED") return "DONE";
+  if (status === "DELIVERED") return "DONE";
   return status;
 };
 
@@ -70,9 +79,39 @@ export default function MyOrdersPage() {
   const queryClient = useQueryClient();
   const dialogCtx = useContext(DialogCtx);
   const toastCtx = useContext(ToastContext);
+  const { value: authUser } = useLocalStorage<UserAuthResponse>(
+    STORAGE_KEYS.AUTH_USER,
+    null,
+  );
   const params = useParams<{ id: string }>();
   const customerId = String(params.id || "");
   const [activeTab, setActiveTab] = useState<OrderTab>("active");
+
+  useEffect(() => {
+    if (!authUser) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    if (authUser.role === "MERCHANT") {
+      router.replace("/businesses-admin");
+      return;
+    }
+
+    if (authUser.role === "ADMIN") {
+      router.replace("/admin/drivers");
+      return;
+    }
+
+    if (authUser.role !== "CUSTOMER") {
+      router.replace("/");
+      return;
+    }
+
+    if (authUser.id !== customerId) {
+      router.replace(`/customers/${authUser.id}/my-orders`);
+    }
+  }, [authUser, customerId, router]);
 
   const queryParams = useMemo(
     () => ({
@@ -128,7 +167,7 @@ export default function MyOrdersPage() {
     dialogCtx.open({
       title: "Cancel this order?",
       description:
-        "This action is only available while order is pending and cannot be undone.",
+        "This action is available before pickup and cannot be undone.",
       confirmLabel: "Yes, Cancel",
       tone: "danger",
       onConfirm: () => cancelOrderMutation.mutate(order.id),
@@ -272,7 +311,9 @@ export default function MyOrdersPage() {
                           <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95">
                             <CreditCard size={16} /> Pay Now
                           </button>
-                        ) : order.status === "PENDING" ? (
+                        ) : CANCELLABLE_STATUSES.has(
+                            (order.status || "").toUpperCase(),
+                          ) ? (
                           <button
                             type="button"
                             onClick={() => handleCancelOrder(order)}
@@ -326,14 +367,17 @@ export default function MyOrdersPage() {
 const StatusPill = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
     PENDING: "bg-orange-50 text-orange-600 border-orange-100",
-    ACCEPTED: "bg-blue-50 text-blue-600 border-blue-100",
+    CONFIRMED: "bg-blue-50 text-blue-600 border-blue-100",
+    PICKUP_ASSIGNED: "bg-sky-50 text-sky-700 border-sky-100",
+    OUT_FOR_PICKUP: "bg-cyan-50 text-cyan-700 border-cyan-100",
     PICKED_UP: "bg-indigo-50 text-indigo-600 border-indigo-100",
-    DELIVERED_TO_SHOP: "bg-cyan-50 text-cyan-700 border-cyan-100",
-    WASHING: "bg-violet-50 text-violet-700 border-violet-100",
+    DELIVERED_TO_SHOP: "bg-teal-50 text-teal-700 border-teal-100",
+    PROCESSING: "bg-violet-50 text-violet-700 border-violet-100",
     READY_FOR_DELIVERY: "bg-green-50 text-green-600 border-green-100",
+    DELIVERY_ASSIGNED: "bg-lime-50 text-lime-700 border-lime-100",
     OUT_FOR_DELIVERY: "bg-emerald-50 text-emerald-600 border-emerald-100",
     DONE: "bg-green-50 text-green-600 border-green-100",
-    COMPLETED: "bg-green-50 text-green-600 border-green-100",
+    DELIVERED: "bg-green-50 text-green-600 border-green-100",
     CANCELLED: "bg-slate-50 text-slate-400 border-slate-200",
   };
 

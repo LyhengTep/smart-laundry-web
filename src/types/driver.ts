@@ -20,6 +20,16 @@ export type DriverResponse = {
   };
 };
 
+export type SingleDriverResponse = {
+  id: string;
+  id_card_number: string;
+  license_number: string | null;
+  plate_number: string;
+  user_id: string;
+  vehicle_color: string;
+  vehicle_type: string;
+};
+
 export type DriverParams = {
   page: number;
   size: number;

@@ -64,20 +64,28 @@ const ShopProfilePage = () => {
   const router = useRouter();
   const businessId = String(params.id || "");
 
-  const { data: business, isLoading, isError } = useQuery({
+  const {
+    data: business,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["business-public", businessId],
     queryFn: () => getBusinessById(businessId),
     enabled: Boolean(businessId),
   });
 
   if (isLoading) {
-    return <div className="min-h-screen bg-white p-8 text-slate-500">Loading shop...</div>;
+    return (
+      <div className="min-h-screen bg-white dark:bg-slate-950 p-8 text-slate-500 dark:text-slate-400">
+        Loading shop...
+      </div>
+    );
   }
 
   if (isError || !business) {
     return (
-      <div className="min-h-screen bg-white p-8">
-        <div className="mx-auto max-w-4xl rounded-3xl border border-red-100 bg-red-50 p-6 text-red-700">
+      <div className="min-h-screen bg-white dark:bg-slate-950 p-8">
+        <div className="mx-auto max-w-4xl rounded-3xl border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-6 text-red-700 dark:text-red-300">
           Failed to load business detail.
         </div>
       </div>
@@ -91,7 +99,7 @@ const ShopProfilePage = () => {
   const offeredServices = (business.services || []).slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       <div className="relative h-[40vh] md:h-[50vh] w-full">
         <img
           src={coverImage}
@@ -100,7 +108,7 @@ const ShopProfilePage = () => {
         />
         <div className="absolute top-6 left-6 right-6 flex justify-between z-10">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.replace("/")}
             className="p-3 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg hover:bg-white transition-all"
           >
             <ArrowLeft size={20} className="text-slate-900" />
@@ -115,7 +123,7 @@ const ShopProfilePage = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 -mt-20 relative z-20">
-        <div className="bg-white rounded-[3rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-50">
+        <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-50 dark:border-slate-800">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -131,10 +139,10 @@ const ShopProfilePage = () => {
                   {(business.rating_avg ?? 0).toFixed(1)}
                 </div>
               </div>
-              <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                 {business.name}
               </h1>
-              <div className="flex items-center gap-2 text-slate-500 font-medium">
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
                 <MapPin size={18} className="text-blue-600 shrink-0" />
                 <span className="line-clamp-2">{business.address}</span>
               </div>
@@ -150,7 +158,7 @@ const ShopProfilePage = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 pt-8 border-t border-slate-50">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 pt-8 border-t border-slate-50 dark:border-slate-800">
             <DetailTile
               icon={<Clock className="text-blue-600" />}
               label="Operating Hours"
@@ -172,18 +180,18 @@ const ShopProfilePage = () => {
 
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-12">
         <section className="space-y-4">
-          <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+          <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Info size={20} className="text-blue-600" /> About the Shop
           </h3>
-          <p className="text-slate-600 leading-relaxed font-medium">
-            {business.name} provides professional laundry services with transparent
-            pricing and scheduled pickup/dropoff support.
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+            {business.name} provides professional laundry services with
+            transparent pricing and scheduled pickup/dropoff support.
           </p>
         </section>
 
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black text-slate-900">
+            <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
               Popular Services
             </h3>
           </div>
@@ -193,13 +201,16 @@ const ShopProfilePage = () => {
                 <PriceCard
                   key={String(service.id || service.service_id)}
                   title={
-                    service.laundry_service?.name || `Service #${service.service_id}`
+                    service.laundry_service?.name ||
+                    `Service #${service.service_id}`
                   }
                   price={`$${(service.base_price ?? 0).toFixed(2)}${formatPricingType(service.pricing_type)}`}
                 />
               ))
             ) : (
-              <p className="text-sm text-slate-500">No service pricing available.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No service pricing available.
+              </p>
             )}
           </div>
         </section>
@@ -218,26 +229,30 @@ const DetailTile = ({
   value: string;
 }) => (
   <div className="flex items-start gap-3">
-    <div className="p-2.5 bg-slate-50 rounded-xl">{icon}</div>
+    <div className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl">{icon}</div>
     <div>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
         {label}
       </p>
-      <p className="text-sm font-bold text-slate-800">{value}</p>
+      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        {value}
+      </p>
     </div>
   </div>
 );
 
 const PriceCard = ({ title, price }: { title: string; price: string }) => (
-  <div className="flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-white hover:border-blue-100 transition-all group cursor-pointer shadow-sm hover:shadow-md">
+  <div className="flex items-center justify-between p-5 rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-100 transition-all group cursor-pointer shadow-sm hover:shadow-md">
     <div className="flex items-center gap-4">
       <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 font-bold">
         {title[0]}
       </div>
-      <p className="font-bold text-slate-900">{title}</p>
+      <p className="font-bold text-slate-900 dark:text-slate-100">{title}</p>
     </div>
     <div className="flex items-center gap-2">
-      <span className="font-black text-slate-900">{price}</span>
+      <span className="font-black text-slate-900 dark:text-slate-100">
+        {price}
+      </span>
       <ChevronRight
         size={18}
         className="text-slate-300 group-hover:text-blue-600 transition-colors"

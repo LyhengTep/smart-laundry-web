@@ -75,15 +75,18 @@ const toPendingCard = (order: LaundryOrder) => {
 
 const LIVE_STATUS_OPTIONS = [
   "PENDING",
-  "ACCEPTED",
+  "CONFIRMED",
+  "PICKUP_ASSIGNED",
+  "OUT_FOR_PICKUP",
   "PICKED_UP",
   "DELIVERED_TO_SHOP",
-  "WASHING",
+  "PROCESSING",
   "READY_FOR_DELIVERY",
+  "DELIVERY_ASSIGNED",
   "OUT_FOR_DELIVERY",
 ];
 
-const HISTORY_STATUS_OPTIONS = ["COMPLETED", "CANCELLED"];
+const HISTORY_STATUS_OPTIONS = ["DELIVERED", "CANCELLED"];
 
 export default function OrderManagementPage() {
   const params = useParams<{ id: string }>();
@@ -222,11 +225,11 @@ export default function OrderManagementPage() {
   const handleAcceptOrder = (id: string) => {
     dialogCtx.open({
       title: "Accept this order?",
-      description: "This will move this order to ACCEPTED.",
+      description: "This will move this order to CONFIRMED.",
       confirmLabel: "Yes, Accept",
       onConfirm: () => {
         setHiddenPendingOrderIds((prev) => [...prev, id]);
-        updateStatusMutation.mutate({ orderId: id, status: "ACCEPTED" });
+        updateStatusMutation.mutate({ orderId: id, status: "CONFIRMED" });
       },
     });
   };
@@ -290,10 +293,10 @@ export default function OrderManagementPage() {
   );
 
   const liveOrders: OrderItem[] = rawOrders
-    .filter((order) => !["COMPLETED", "CANCELLED"].includes(order.status))
+    .filter((order) => !["DELIVERED", "CANCELLED"].includes(order.status))
     .map(toOrderCard);
   const historyOrders: OrderItem[] = rawOrders
-    .filter((order) => ["COMPLETED", "CANCELLED"].includes(order.status))
+    .filter((order) => ["DELIVERED", "CANCELLED"].includes(order.status))
     .map(toOrderCard);
   const visibleOrders = activeSection === "orders" ? liveOrders : historyOrders;
   const statusOptions =
@@ -337,17 +340,20 @@ export default function OrderManagementPage() {
         processingCount={
           rawOrders.filter((o) =>
             [
-              "ACCEPTED",
+              "CONFIRMED",
+              "PICKUP_ASSIGNED",
+              "OUT_FOR_PICKUP",
               "PICKED_UP",
               "DELIVERED_TO_SHOP",
-              "WASHING",
+              "PROCESSING",
               "READY_FOR_DELIVERY",
+              "DELIVERY_ASSIGNED",
               "OUT_FOR_DELIVERY",
             ].includes(o.status),
           ).length
         }
         completedCount={
-          rawOrders.filter((o) => o.status === "COMPLETED").length
+          rawOrders.filter((o) => o.status === "DELIVERED").length
         }
       />
 

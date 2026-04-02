@@ -1,12 +1,18 @@
+import { UserAuthResponse } from "./auth";
+import { BusinessResponse } from "./business";
+
 export type OrderStatus =
   | "PENDING"
-  | "ACCEPTED"
+  | "CONFIRMED"
+  | "PICKUP_ASSIGNED"
+  | "OUT_FOR_PICKUP"
   | "PICKED_UP"
   | "DELIVERED_TO_SHOP"
-  | "WASHING"
+  | "PROCESSING"
   | "READY_FOR_DELIVERY"
+  | "DELIVERY_ASSIGNED"
   | "OUT_FOR_DELIVERY"
-  | "COMPLETED"
+  | "DELIVERED"
   | "CANCELLED"
   | string;
 
@@ -35,7 +41,11 @@ export interface LaundryOrder {
   scheduled_pickup_at?: string | null;
   scheduled_dropoff_at?: string | null;
   pickup_address?: string;
+  pickup_latitude?: number | null;
+  pickup_longitude?: number | null;
   delivery_address?: string;
+  delivery_latitude?: number | null;
+  delivery_longitude?: number | null;
   notes?: string | null;
   subtotal: number;
   discount: number;
@@ -43,6 +53,8 @@ export interface LaundryOrder {
   created_at: string;
   updated_at: string;
   items: LaundryOrderLine[];
+  customer?: UserAuthResponse | null;
+  business?: BusinessResponse | null;
 }
 
 export interface LaundryOrderListResponse {

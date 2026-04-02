@@ -9,12 +9,22 @@ interface NavProps {
   onLogout?: () => void;
 }
 export default function Navbar(props: NavProps) {
-  const myOrdersHref = props.user
-    ? `/customers/${props.user.id}/my-orders`
-    : "/auth/login";
+  const quickLink = (() => {
+    if (!props.user) return { href: "/auth/login", label: "My Orders" };
+    if (props.user.role === "CUSTOMER") {
+      return { href: `/customers/${props.user.id}/my-orders`, label: "My Orders" };
+    }
+    if (props.user.role === "MERCHANT") {
+      return { href: "/businesses-admin", label: "Dashboard" };
+    }
+    if (props.user.role === "ADMIN") {
+      return { href: "/admin/drivers", label: "Dashboard" };
+    }
+    return { href: "/", label: "Dashboard" };
+  })();
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <nav className="bg-white/80 dark:bg-slate-900/85 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-transparent dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link href="/" className="flex items-center gap-2">
@@ -34,16 +44,16 @@ export default function Navbar(props: NavProps) {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold text-slate-800 tracking-tight">
+            <span className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               Smart Laundry
             </span>
           </Link>
-          <div className="hidden md:flex space-x-8 text-slate-600 font-medium">
+          <div className="hidden md:flex space-x-8 text-slate-600 dark:text-slate-300 font-medium">
             <Link href="#shops" className="hover:text-blue-600 transition">
               Browse Shops
             </Link>
-            <Link href={myOrdersHref} className="hover:text-blue-600 transition">
-              My Orders
+            <Link href={quickLink.href} className="hover:text-blue-600 transition">
+              {quickLink.label}
             </Link>
           </div>
 
@@ -52,7 +62,7 @@ export default function Navbar(props: NavProps) {
               <>
                 <Link
                   href="/user/profile"
-                  className="flex text-slate-600 font-medium hover:text-blue-600 transition"
+                  className="flex text-slate-600 dark:text-slate-300 font-medium hover:text-blue-600 transition"
                 >
                   <User className="mx-1" />
                   My Profile
@@ -68,7 +78,7 @@ export default function Navbar(props: NavProps) {
               <>
                 <Link
                   href="/auth/login"
-                  className="text-slate-600 font-medium hover:text-blue-600 transition"
+                  className="text-slate-600 dark:text-slate-300 font-medium hover:text-blue-600 transition"
                 >
                   Login
                 </Link>

@@ -26,8 +26,8 @@ const formatAmount = (value?: number) =>
   typeof value === "number" ? `$${value.toFixed(2)}` : "-";
 
 const SHOP_NEXT_STATUS: Record<string, string> = {
-  DELIVERED_TO_SHOP: "WASHING",
-  WASHING: "READY_FOR_DELIVERY",
+  DELIVERED_TO_SHOP: "PROCESSING",
+  PROCESSING: "READY_FOR_DELIVERY",
 };
 
 export function OrderDetailDrawer({
@@ -50,7 +50,7 @@ export function OrderDetailDrawer({
 
   const nextStatus = order ? SHOP_NEXT_STATUS[order.status] : undefined;
   const canUpdate =
-    order?.status === "DELIVERED_TO_SHOP" || order?.status === "WASHING";
+    order?.status === "DELIVERED_TO_SHOP" || order?.status === "PROCESSING";
   const canRecalculate = order?.status === "DELIVERED_TO_SHOP";
 
   const pricedItems = useMemo(

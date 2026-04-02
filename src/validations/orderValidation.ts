@@ -11,7 +11,7 @@ export const CreateOrderSchema = z
     scheduledPickupAt: z.string().min(1, "Pickup time is required."),
     scheduledDropoffAt: z.string().min(1, "Drop-off time is required."),
     notes: z.string().optional(),
-    discount: z.coerce.number().min(0),
+    discount: z.number().min(0),
     services: z
       .array(
         z.object({
@@ -20,7 +20,7 @@ export const CreateOrderSchema = z
           unit_price: z.number().min(0),
           measure_type: z.string(),
           selected: z.boolean(),
-          quantity: z.coerce.number().min(0),
+          quantity: z.number().min(0),
           note: z.string().optional(),
         }),
       )

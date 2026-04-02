@@ -1,3 +1,7 @@
+import { SingleDriverResponse } from "./driver";
+
+export type RoleName = "ADMIN" | "MERCHANT" | "DRIVER" | "CUSTOMER";
+
 export interface RegisterUserDTO {
   full_name: string;
   user_name: string;
@@ -24,6 +28,11 @@ export interface LoginDTO {
   // role: RoleName;
 }
 
+export interface LogoutDTO {
+  user_id: string;
+  role: RoleName;
+}
+
 export type UserAuthResponse = {
   id: string; // UUID
   full_name: string;
@@ -35,6 +44,5 @@ export type UserAuthResponse = {
   created_at: string; // ISO datetime
   updated_at: string; // ISO datetime
   token: string; // JWT
+  driver?: SingleDriverResponse;
 };
-
-type RoleName = "ADMIN" | "MERCHANT" | "DRIVER" | "CUSTOMER";

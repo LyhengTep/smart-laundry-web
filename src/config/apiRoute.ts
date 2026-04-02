@@ -1,6 +1,8 @@
 export const API_ROUTES = {
   REGISTER_USER: "/auths/signup",
   LOGIN: "/auths/login",
+  LOGOUT: "/auths/logout",
+  UPDATE_USER_MSG_TOKEN: (user_id: string) => `/users/${user_id}/msg-token`,
   FETCH_BUSINESSES: "/businesses/",
   GET_BUSINESS: (id: string) => `/businesses/${id}`,
   UPDATE_BUSINESS: (id: string) => `/businesses/${id}`,
@@ -13,9 +15,21 @@ export const API_ROUTES = {
   APPROVE_DRIVER: (id: string) => `/drivers/${id}/approve`,
   REJECT_DRIVER: (id: string) => `/drivers/${id}/reject`,
   GET_DRIVER: (id: string) => `/drivers/${id}`,
+  GET_DRIVER_BY_USER: (user_id: string) => `/drivers/by-user/${user_id}`,
   UPDATE_DRIVER: (id: string) => `/drivers/${id}`,
   SUSPEND_DRIVER: (id: string) => `/drivers/${id}/suspend`,
   CREATE_BUSINESS: "/businesses/",
   DELETE_BUSINESS: (business_id: string) => `/businesses/${business_id}`,
   CREATE_BUSINESS_SERVICES: "/business-services/bulk",
+
+  ACCEPT_DRIVER_TASK: (taskId: string) =>
+    `/drivers/assignments/${taskId}/accept`,
+
+  DRIVER_ASSIGNEMNTS: "/drivers/assignments/",
+  DEVICE_TOKENS: "/device-tokens",
+  REGISTER_DEVICE_TOKEN: "/device-tokens/register",
+  DEVICE_TOKEN: (id: number) => `/device-tokens/${id}`,
+  DEVICE_TOKENS_BY_USER: (user_id: number) => `/device-tokens/by-user/${user_id}`,
+  DEVICE_TOKENS_BY_DRIVER: (driver_id: number) =>
+    `/device-tokens/by-driver/${driver_id}`,
 };
