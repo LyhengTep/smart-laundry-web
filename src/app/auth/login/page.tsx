@@ -22,7 +22,7 @@ import axios from "axios";
 import { ArrowRight, Lock, Mail, Wind } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
+import { Suspense, useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm, UseFormSetValue } from "react-hook-form";
 import { z } from "zod";
 const roles: Record<string, RoleSelectorValues> = {
@@ -62,6 +62,14 @@ const detectDeviceType = () => {
 };
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Login />
+    </Suspense>
+  );
+}
+
+function Login() {
   const toastCtx = useContext(ToastContext);
   const [role, setRole] = useState<RoleKeys>("CUSTOMER");
   const router = useRouter();
