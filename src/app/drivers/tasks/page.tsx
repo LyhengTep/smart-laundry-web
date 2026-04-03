@@ -5,6 +5,7 @@ import DriverBottomNav from "@/components/drivers/DriverBottomNav";
 import DriverStatCard from "@/components/drivers/DriverStatCard";
 import DriverTaskRequestCard from "@/components/drivers/DriverTaskRequestCard";
 import { STORAGE_KEYS } from "@/config/common";
+import { ToastContext } from "@/contexts/ToastProvider";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { convertAssignmentToDriverTask } from "@/lib/objectMapper";
 import { clearAuthSession, logout } from "@/services/authService";
@@ -21,19 +22,21 @@ import {
   DriverTaskRequest,
   DriverTaskTab,
 } from "@/types/driverTask";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { toToastMessage } from "@/utils/toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { Bell, LogOut, User, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import useWebSocket from "react-use-websocket";
 
 export default function DriverTasksPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DriverTaskTab>("tasks");
-
+  const queryClient = useQueryClient();
   const [newRequest, setNewRequest] = useState<DriverTaskRequest | null>();
   const [activeTasks, setActiveTasks] = useState<DriverTask[]>([]);
-
+  const toastCtx = useContext(ToastContext);
   const { value: authUser, setValue: setAuthUser } =
     useLocalStorage<UserAuthResponse | null>(STORAGE_KEYS.AUTH_USER, null);
 
@@ -45,6 +48,28 @@ export default function DriverTasksPage() {
   const { mutate } = useMutation({
     mutationFn: async (taskId: string) => {
       await acceptDriverTask(taskId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["authUser", authUser?.driver?.id],
+      });
+    },
+    onError: (e) => {
+      console.log("Accept task failed", e);
+      // alert("Failed to accept task. Please try again.");
+      console.log("Error from service", e);
+      const message = axios.isAxiosError(e)
+        ? ((e.response?.data as any)?.detail ?? e.message)
+        : e instanceof Error
+          ? e.message
+          : "Something went wrong";
+      if (toastCtx.setToast)
+        toastCtx.setToast({
+          error: true,
+          message: toToastMessage(message),
+        });
+
+      toastCtx.setIsVisible(true);
     },
   });
 

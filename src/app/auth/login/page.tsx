@@ -21,7 +21,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { ArrowRight, Lock, Mail, Wind } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm, UseFormSetValue } from "react-hook-form";
 import { z } from "zod";
@@ -65,6 +65,8 @@ export default function LoginPage() {
   const toastCtx = useContext(ToastContext);
   const [role, setRole] = useState<RoleKeys>("CUSTOMER");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const {
     register,
     handleSubmit,
@@ -119,7 +121,7 @@ export default function LoginPage() {
             const fcmToken = await getFcmToken();
             console.log("Obtained FCM token:", fcmToken);
             if (fcmToken) {
-              let res = await registerDeviceToken({
+              const res = await registerDeviceToken({
                 user_id: value.id,
                 driver_id: value?.driver?.id || null,
                 token: fcmToken,
@@ -139,6 +141,11 @@ export default function LoginPage() {
 
       toastCtx.setIsVisible(true);
       setTimeout(() => {
+        if (redirect && redirect.startsWith("/")) {
+          router.replace(redirect);
+          return;
+        }
+
         if (value.role === "MERCHANT") {
           router.push("/businesses-admin");
           return;

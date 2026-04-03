@@ -1,7 +1,10 @@
 "use client";
 
 import { BASE_URL } from "@/config/common";
+import { STORAGE_KEYS } from "@/config/common";
+import { useLocalStorage } from "@/hooks/localStorage";
 import { getBusinessById } from "@/services/businessService";
+import { UserAuthResponse } from "@/types/auth";
 import { BusinessResponse, PricingType } from "@/types/business";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -63,6 +66,10 @@ const ShopProfilePage = () => {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const businessId = String(params.id || "");
+  const { value: authUser } = useLocalStorage<UserAuthResponse | null>(
+    STORAGE_KEYS.AUTH_USER,
+    null,
+  );
 
   const {
     data: business,
@@ -150,7 +157,16 @@ const ShopProfilePage = () => {
 
             <button
               type="button"
-              onClick={() => router.push(`/businesses/${businessId}/order`)}
+              onClick={() => {
+                if (!authUser?.id) {
+                  const redirectTo = encodeURIComponent(
+                    `/businesses/${businessId}/order`,
+                  );
+                  router.push(`/auth/login?redirect=${redirectTo}`);
+                  return;
+                }
+                router.push(`/businesses/${businessId}/order`);
+              }}
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 text-white font-black text-base md:text-lg rounded-2xl shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all whitespace-nowrap self-start"
             >
               <ShoppingBag size={20} />

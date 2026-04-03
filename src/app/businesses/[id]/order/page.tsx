@@ -122,6 +122,17 @@ const CustomerOrderPage = () => {
     STORAGE_KEYS.AUTH_USER,
     null,
   );
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    if (authChecked) return;
+    if (!authUser?.id) {
+      const redirectTo = encodeURIComponent(`/businesses/${businessId}/order`);
+      router.replace(`/auth/login?redirect=${redirectTo}`);
+      return;
+    }
+    setAuthChecked(true);
+  }, [authChecked, authUser?.id, businessId, router]);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
   const { isLoaded: isMapLoaded } = useJsApiLoader({
@@ -415,6 +426,14 @@ const CustomerOrderPage = () => {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8 text-slate-500 dark:text-slate-400">
         Loading services...
+      </div>
+    );
+  }
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8 text-slate-500 dark:text-slate-400">
+        Redirecting to login...
       </div>
     );
   }
