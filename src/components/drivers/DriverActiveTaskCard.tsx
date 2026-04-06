@@ -1,13 +1,30 @@
 import { DriverTask } from "@/types/driverTask";
-import { MessageSquare, Navigation, Package, Phone } from "lucide-react";
+import {
+  CheckCircle2,
+  MessageSquare,
+  Navigation,
+  Package,
+  Phone,
+} from "lucide-react";
 
 interface DriverActiveTaskCardProps {
   task: DriverTask;
+  onComplete?: (task: DriverTask) => void;
+  isCompleting?: boolean;
+  completeLabel?: string;
+  completeDisabled?: boolean;
 }
 
 export default function DriverActiveTaskCard({
   task,
+  onComplete,
+  isCompleting = false,
+  completeLabel,
+  completeDisabled = false,
 }: DriverActiveTaskCardProps) {
+  const canOpenMap =
+    typeof task.lat === "number" && typeof task.lng === "number";
+  console.log("task in card ", task);
   return (
     <div className="bg-slate-900 rounded-[2rem] border border-white/5 p-6 hover:border-blue-500/50 transition-all group">
       <div className="flex justify-between items-start mb-4">
@@ -42,14 +59,36 @@ export default function DriverActiveTaskCard({
         </div>
       </div>
       <p className="text-slate-300 text-sm mb-4">{task.address}</p>
-      <a
-        href={`https://www.google.com/maps/dir/?api=1&destination=${task.lat},${task.lng}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="w-full py-4 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 border border-blue-600/20"
-      >
-        <Navigation size={18} /> Start Route
-      </a>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <a
+          href={
+            canOpenMap
+              ? `https://www.google.com/maps/dir/?api=1&destination=${task.status === "PICKED_UP" ? task.lat : task.business?.latitude},${task.status === "PICKED_UP" ? task.lng : task.business?.longitude}`
+              : "#"
+          }
+          target={canOpenMap ? "_blank" : undefined}
+          rel={canOpenMap ? "noopener noreferrer" : undefined}
+          className={`w-full py-4 font-black rounded-2xl transition-all flex items-center justify-center gap-2 border ${
+            canOpenMap
+              ? "bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white border-blue-600/20"
+              : "bg-slate-800 text-slate-500 border-slate-700 pointer-events-none"
+          }`}
+        >
+          <Navigation size={18} /> Start Route
+        </a>
+        <button
+          type="button"
+          onClick={() => onComplete?.(task)}
+          disabled={!onComplete || isCompleting || completeDisabled}
+          className="w-full py-4 bg-emerald-600/15 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 border border-emerald-600/30 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <CheckCircle2 size={18} />
+          {isCompleting
+            ? "Updating..."
+            : completeLabel ||
+              (task.status === "PICKED_UP" ? "Delivered to Shop" : "Delivered")}
+        </button>
+      </div>
     </div>
   );
 }

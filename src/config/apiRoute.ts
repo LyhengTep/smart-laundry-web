@@ -24,6 +24,10 @@ export const API_ROUTES = {
 
   ACCEPT_DRIVER_TASK: (taskId: string) =>
     `/drivers/assignments/${taskId}/accept`,
+  MARK_ASSIGNMENT_PICKED_UP: (assignmentId: string) =>
+    `/drivers/assignments/${assignmentId}/picked-up`,
+  MARK_ASSIGNMENT_DELIVERED: (assignmentId: string) =>
+    `/drivers/assignments/${assignmentId}/delivered`,
 
   DRIVER_ASSIGNEMNTS: "/drivers/assignments/",
   DEVICE_TOKENS: "/device-tokens",

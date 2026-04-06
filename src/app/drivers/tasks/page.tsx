@@ -2,6 +2,7 @@
 
 import DriverActiveTaskCard from "@/components/drivers/DriverActiveTaskCard";
 import DriverBottomNav from "@/components/drivers/DriverBottomNav";
+import DriverHistoryTaskCard from "@/components/drivers/DriverHistoryTaskCard";
 import DriverStatCard from "@/components/drivers/DriverStatCard";
 import DriverTaskRequestCard from "@/components/drivers/DriverTaskRequestCard";
 import { STORAGE_KEYS } from "@/config/common";
@@ -12,8 +13,11 @@ import { clearAuthSession, logout } from "@/services/authService";
 import {
   acceptDriverTask,
   DEFAULT_DRIVER_STATS,
+  getDriverHistories,
   getDriverTasks,
   getDriverTaskWsUrl,
+  markAssignmentDelivered,
+  markAssignmentPickedUp,
 } from "@/services/driverTaskService";
 import { UserAuthResponse } from "@/types/auth";
 import {
@@ -30,12 +34,25 @@ import { useRouter } from "next/navigation";
 import { useContext, useEffect, useMemo, useState } from "react";
 import useWebSocket from "react-use-websocket";
 
+const getTaskCompletionAction = (task: DriverTask) => {
+  const status = (task.status || "").toUpperCase();
+
+  if (status === "PICKED_UP") {
+    return { label: "Mark as Delivered", nextAction: "delivered" as const };
+  }
+  if (status === "DELIVERED_TO_SHOP" || status === "DELIVERED") {
+    return { label: "Completed", nextAction: null };
+  }
+  return { label: "Mark as Picked Up", nextAction: "picked-up" as const };
+};
+
 export default function DriverTasksPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DriverTaskTab>("tasks");
   const queryClient = useQueryClient();
   const [newRequest, setNewRequest] = useState<DriverTaskRequest | null>();
   const [activeTasks, setActiveTasks] = useState<DriverTask[]>([]);
+  const [historyTasks, setHistoryTasks] = useState<DriverTask[]>([]);
   const toastCtx = useContext(ToastContext);
   const { value: authUser, setValue: setAuthUser } =
     useLocalStorage<UserAuthResponse | null>(STORAGE_KEYS.AUTH_USER, null);
@@ -44,14 +61,27 @@ export default function DriverTasksPage() {
     () => getDriverTaskWsUrl(authUser?.driver?.id),
     [authUser?.driver?.id],
   );
+  const driverTasksQueryKey = useMemo(
+    () => ["driver-tasks", authUser?.driver?.id] as const,
+    [authUser?.driver?.id],
+  );
 
+  const driverHistoryTasksQueryKey = useMemo(
+    () => ["driver-history-tasks", authUser?.driver?.id] as const,
+    [authUser?.driver?.id],
+  );
   const { mutate } = useMutation({
     mutationFn: async (taskId: string) => {
       await acceptDriverTask(taskId);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["authUser", authUser?.driver?.id],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: driverTasksQueryKey,
+        refetchType: "active",
+      });
+      await queryClient.refetchQueries({
+        queryKey: driverTasksQueryKey,
+        type: "active",
       });
     },
     onError: (e) => {
@@ -59,7 +89,7 @@ export default function DriverTasksPage() {
       // alert("Failed to accept task. Please try again.");
       console.log("Error from service", e);
       const message = axios.isAxiosError(e)
-        ? ((e.response?.data as any)?.detail ?? e.message)
+        ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
         : e instanceof Error
           ? e.message
           : "Something went wrong";
@@ -73,9 +103,57 @@ export default function DriverTasksPage() {
     },
   });
 
+  const { mutate: mutateCompleteTask, isPending: isCompletingTask } =
+    useMutation({
+      mutationFn: async ({
+        assignmentId,
+        action,
+      }: {
+        assignmentId: string;
+        action: "picked-up" | "delivered";
+      }) => {
+        if (action === "picked-up") {
+          return markAssignmentPickedUp(assignmentId);
+        }
+        return markAssignmentDelivered(assignmentId);
+      },
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: driverTasksQueryKey,
+          refetchType: "active",
+        });
+        await queryClient.refetchQueries({
+          queryKey: driverTasksQueryKey,
+          type: "active",
+        });
+        toastCtx.setToast?.({
+          error: false,
+          message: "Task updated successfully.",
+        });
+        toastCtx.setIsVisible(true);
+      },
+      onError: (e) => {
+        const message = axios.isAxiosError(e)
+          ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
+          : e instanceof Error
+            ? e.message
+            : "Failed to update task";
+        toastCtx.setToast?.({
+          error: true,
+          message: toToastMessage(message),
+        });
+        toastCtx.setIsVisible(true);
+      },
+    });
+
   const { data: driverTasks } = useQuery({
-    queryKey: ["authUser", authUser?.driver?.id],
+    queryKey: driverTasksQueryKey,
     queryFn: () => getDriverTasks(authUser?.driver?.id || ""),
+  });
+
+  const { data: driverTaskHistories } = useQuery({
+    queryKey: driverHistoryTasksQueryKey,
+    queryFn: () => getDriverHistories(authUser?.driver?.id || ""),
   });
 
   useEffect(() => {
@@ -86,7 +164,18 @@ export default function DriverTasksPage() {
       ) || [],
     );
   }, [driverTasks]);
-  console.log("driver profile ---->", driverTasks);
+
+  useEffect(() => {
+    console.log("driver history tasks are ", driverTaskHistories);
+    setHistoryTasks(
+      driverTaskHistories?.items?.map((task: DriverAssignmentResponse) =>
+        convertAssignmentToDriverTask(task),
+      ) || [],
+    );
+  }, [driverTaskHistories]);
+
+  console.log("driver history", driverTaskHistories);
+  // console.log("driver profile ---->", driverTasks);
 
   useWebSocket(wsUrl, {
     shouldReconnect: () => true,
@@ -124,6 +213,32 @@ export default function DriverTasksPage() {
   const handleAcceptRequest = (request: DriverTaskRequest) => {
     mutate(request.id);
     setNewRequest(null);
+  };
+
+  const handleCompleteTask = (task: DriverTask) => {
+    const action = getTaskCompletionAction(task);
+    if (!task.id) {
+      toastCtx.setToast?.({
+        error: true,
+        message: "Missing assignment id for this task.",
+      });
+      toastCtx.setIsVisible(true);
+      return;
+    }
+
+    if (!action.nextAction) {
+      toastCtx.setToast?.({
+        error: false,
+        message: "This task is already completed.",
+      });
+      toastCtx.setIsVisible(true);
+      return;
+    }
+
+    mutateCompleteTask({
+      assignmentId: task.id,
+      action: action.nextAction,
+    });
   };
 
   const handleLogout = async () => {
@@ -198,9 +313,21 @@ export default function DriverTasksPage() {
               </h4>
 
               {activeTasks?.length > 0 ? (
-                activeTasks.map((task) => (
-                  <DriverActiveTaskCard key={task.id} task={task} />
-                ))
+                activeTasks.map((task) =>
+                  (() => {
+                    const action = getTaskCompletionAction(task);
+                    return (
+                      <DriverActiveTaskCard
+                        key={task.id}
+                        task={task}
+                        onComplete={handleCompleteTask}
+                        isCompleting={isCompletingTask}
+                        completeLabel={action.label}
+                        completeDisabled={!action.nextAction}
+                      />
+                    );
+                  })(),
+                )
               ) : (
                 <p className="text-slate-500 text-center py-4">
                   No active missions.
@@ -245,6 +372,34 @@ export default function DriverTasksPage() {
                 value={String(DEFAULT_DRIVER_STATS.rating)}
                 sub={DEFAULT_DRIVER_STATS.ratingNote}
               />
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 flex justify-between">
+                Histories <span>{activeTasks?.length}</span>
+              </h4>
+
+              {historyTasks?.length > 0 ? (
+                historyTasks.map((task) =>
+                  (() => {
+                    const action = getTaskCompletionAction(task);
+                    return (
+                      <DriverHistoryTaskCard
+                        key={task.id}
+                        task={task}
+                        // onComplete={handleCompleteTask}
+                        // isCompleting={isCompletingTask}
+                        // completeLabel={action.label}
+                        // completeDisabled={!action.nextAction}
+                      />
+                    );
+                  })(),
+                )
+              ) : (
+                <p className="text-slate-500 text-center py-4">
+                  No active missions.
+                </p>
+              )}
             </div>
           </div>
         )}
