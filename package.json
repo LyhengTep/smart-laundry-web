@@ -24,6 +24,7 @@
     "react-hook-form": "^7.71.0",
     "react-lottie": "^1.2.10",
     "react-use-websocket": "^4.13.0",
+    "tailwind-merge": "^3.5.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {
