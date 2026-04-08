@@ -34,12 +34,16 @@ export default function Navbar(props: NavProps) {
           {/* 
             Hamburger button only display on small devices
           */}
-          <button
-            onClick={() => props?.onDrawerClick && props.onDrawerClick()}
-            className="block md:hidden p-3 mr-3 bg-slate-900 rounded-xl border border-white/5 text-slate-400 active:scale-95 transition-all"
-          >
-            <Menu size={20} />
-          </button>
+          {props?.user ? (
+            <button
+              onClick={() => props?.onDrawerClick && props.onDrawerClick()}
+              className="block md:hidden p-3 mr-3 bg-slate-900 rounded-xl border border-white/5 text-slate-400 active:scale-95 transition-all"
+            >
+              <Menu size={20} />
+            </button>
+          ) : (
+            <div className="flex items-center justify-between md:hidden p-5"></div>
+          )}
 
           {/* 
             System logo

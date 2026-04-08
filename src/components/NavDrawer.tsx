@@ -74,9 +74,11 @@ export function NavDrawer({
               <Package size={28} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white">David Miller</h2>
+              <h2 className="text-xl font-black text-white">
+                {user?.full_name}
+              </h2>
               <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mt-1">
-                Elite Driver
+                Have a nice day :)
               </p>
             </div>
           </div>
