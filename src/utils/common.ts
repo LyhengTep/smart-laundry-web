@@ -1,3 +1,5 @@
+import { UserAuthResponse } from "@/types/auth";
+
 export const formatLaundryServiceType = (type: string) => {
   switch (type) {
     case "WASH":
@@ -22,4 +24,21 @@ export const getLaundryServicePic = (type: string) => {
     default:
       return "";
   }
+};
+
+export const getQuickLink = (user: UserAuthResponse | null) => {
+  if (!user) return { href: "/auth/login", label: "My Orders" };
+  if (user.role === "CUSTOMER") {
+    return {
+      href: `/customers/${user.id}/my-orders`,
+      label: "My Orders",
+    };
+  }
+  if (user.role === "MERCHANT") {
+    return { href: "/businesses-admin", label: "Dashboard" };
+  }
+  if (user.role === "ADMIN") {
+    return { href: "/admin/drivers", label: "Dashboard" };
+  }
+  return { href: "/", label: "Dashboard" };
 };

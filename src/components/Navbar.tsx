@@ -1,18 +1,22 @@
 "use client";
 
 import { UserAuthResponse } from "@/types/auth";
-import { User } from "lucide-react";
+import { LogIn, Menu, User } from "lucide-react";
 import Link from "next/link";
 
 interface NavProps {
   user?: UserAuthResponse | null;
   onLogout?: () => void;
+  onDrawerClick?: () => void;
 }
 export default function Navbar(props: NavProps) {
   const quickLink = (() => {
     if (!props.user) return { href: "/auth/login", label: "My Orders" };
     if (props.user.role === "CUSTOMER") {
-      return { href: `/customers/${props.user.id}/my-orders`, label: "My Orders" };
+      return {
+        href: `/customers/${props.user.id}/my-orders`,
+        label: "My Orders",
+      };
     }
     if (props.user.role === "MERCHANT") {
       return { href: "/businesses-admin", label: "Dashboard" };
@@ -27,8 +31,21 @@ export default function Navbar(props: NavProps) {
     <nav className="bg-white/80 dark:bg-slate-900/85 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-transparent dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
+          {/* 
+            Hamburger button only display on small devices
+          */}
+          <button
+            onClick={() => props?.onDrawerClick && props.onDrawerClick()}
+            className="block md:hidden p-3 mr-3 bg-slate-900 rounded-xl border border-white/5 text-slate-400 active:scale-95 transition-all"
+          >
+            <Menu size={20} />
+          </button>
+
+          {/* 
+            System logo
+          */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-lg text-white">
+            <div className="hidden md:flex bg-blue-600 p-2 rounded-lg text-white">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -48,16 +65,38 @@ export default function Navbar(props: NavProps) {
               Smart Laundry
             </span>
           </Link>
+
+          {!props?.user ? (
+            <div className="flex items-center justify-between md:hidden ">
+              <Link
+                href="/auth/login"
+                className="text-slate-600 mr-[2px] dark:text-slate-300 font-medium hover:text-blue-600 transition"
+              >
+                <LogIn size={20} />
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="bg-blue-600 text-[10px] text-white px-2 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-100 font-semibold"
+              >
+                Sign Up
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between md:hidden p-5"></div>
+          )}
+
           <div className="hidden md:flex space-x-8 text-slate-600 dark:text-slate-300 font-medium">
             <Link href="#shops" className="hover:text-blue-600 transition">
               Browse Shops
             </Link>
-            <Link href={quickLink.href} className="hover:text-blue-600 transition">
+            <Link
+              href={quickLink.href}
+              className="hover:text-blue-600 transition"
+            >
               {quickLink.label}
             </Link>
           </div>
-
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             {props.user ? (
               <>
                 <Link

@@ -1,15 +1,17 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { BASE_URL } from "@/config/common";
-import { STORAGE_KEYS } from "@/config/common";
+import { NavDrawer } from "@/components/NavDrawer";
+import { BASE_URL, STORAGE_KEYS } from "@/config/common";
 import { useBusinesses } from "@/hooks/businesses/businessHook";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { clearAuthSession, logout } from "@/services/authService";
 import { UserAuthResponse } from "@/types/auth";
 import { Business } from "@/types/business";
+import { getQuickLink } from "@/utils/common";
 import { Clock3, MapPin, Star } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 const toTimeMinutes = (value?: string) => {
@@ -75,6 +77,9 @@ export default function Home() {
   );
   const { data, isLoading, isError } = useBusinesses({ page: 1, size: 12 });
   const [showOpenOnly, setShowOpenOnly] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const router = useRouter();
 
   const shops = useMemo(() => {
     const available = (data?.items || []).filter((business) =>
@@ -85,30 +90,49 @@ export default function Home() {
       : available;
   }, [data?.items, showOpenOnly]);
 
+  const onDrawerActionClick = (key: string) => {
+    const quickLink = getQuickLink(value);
+    if (key == "MY_ORDER") {
+      router.push(quickLink.href);
+    }
+  };
+
+  const doLogout = async () => {
+    try {
+      if (value?.id && value?.role) {
+        await logout({
+          user_id: value.id,
+          role: value.role,
+        });
+      }
+    } catch (error) {
+      console.log("Logout API failed", error);
+    } finally {
+      clearAuthSession();
+      setValue(null);
+    }
+  };
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Navbar
         user={value}
+        onDrawerClick={() => setIsDrawerOpen(true)}
         onLogout={() => {
-          const doLogout = async () => {
-            try {
-              if (value?.id && value?.role) {
-                await logout({
-                  user_id: value.id,
-                  role: value.role,
-                });
-              }
-            } catch (error) {
-              console.log("Logout API failed", error);
-            } finally {
-              clearAuthSession();
-              setValue(null);
-            }
-          };
-          void doLogout();
+          doLogout();
         }}
       />
-
+      <NavDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+        }}
+        user={value}
+        onLogout={() => {
+          doLogout();
+          setIsDrawerOpen(false);
+        }}
+        onActionClick={onDrawerActionClick}
+      />
       <header className="bg-white dark:bg-slate-900 pt-12 pb-20 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-slate-100 mb-6 leading-tight">
@@ -246,16 +270,24 @@ function ShopCard({ shop }: { shop: Business }) {
             </h3>
             <div className="flex items-center gap-1 text-amber-500 font-bold shrink-0">
               <Star size={14} fill="currentColor" />
-              <span className="text-sm">{(shop.rating_avg ?? 0).toFixed(1)}</span>
+              <span className="text-sm">
+                {(shop.rating_avg ?? 0).toFixed(1)}
+              </span>
             </div>
           </div>
 
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-2 line-clamp-2 flex items-start gap-2">
-            <MapPin size={14} className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500" />
+            <MapPin
+              size={14}
+              className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500"
+            />
             <span>{shop.address || "-"}</span>
           </p>
           <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2">
-            <Clock3 size={14} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <Clock3
+              size={14}
+              className="shrink-0 text-slate-400 dark:text-slate-500"
+            />
             <span>
               {formatTime(shop.open_time)} - {formatTime(shop.close_time)}
             </span>
