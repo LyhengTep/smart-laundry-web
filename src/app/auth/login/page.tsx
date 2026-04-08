@@ -192,7 +192,7 @@ function Login() {
               <div className="bg-blue-600 p-2 rounded-xl text-white">
                 <Wind size={24} />
               </div>
-              <span className="text-2xl font-black text-slate-800 tracking-tight">
+              <span className="text-lg md:text-2xl font-black text-slate-800 tracking-tight">
                 {APP_NAME}
               </span>
             </Link>

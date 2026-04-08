@@ -33,7 +33,7 @@ export const RoleSelector = (props: RoleSelectorProps) => {
           <button
             key={v}
             onClick={() => props.setType(v)}
-            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-bold rounded-xl transition-all ${
+            className={`flex-1 py-3 text-[8px] md:text-md flex items-center justify-center gap-2 text-sm font-bold rounded-xl transition-all ${
               props.currentValue === v
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
