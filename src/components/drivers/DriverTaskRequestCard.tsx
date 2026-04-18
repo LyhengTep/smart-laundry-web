@@ -1,17 +1,38 @@
 import { DriverTaskRequest } from "@/types/driverTask";
 import { BadgeDollarSign, Zap } from "lucide-react";
-
+import { useEffect, useState } from "react";
 interface DriverTaskRequestCardProps {
   request: DriverTaskRequest;
   onAccept: (request: DriverTaskRequest) => void;
   onReject: () => void;
+  timeout?: number;
+  onClose: () => void;
 }
 
 export default function DriverTaskRequestCard({
   request,
   onAccept,
   onReject,
+  timeout,
+  onClose,
 }: DriverTaskRequestCardProps) {
+  const [timer, setTimer] = useState(timeout || 0);
+
+  useEffect(() => {
+    console.log("timer value", timer);
+    if (!timer || timer <= 0) {
+      console.log("condition passed");
+      onClose();
+      return;
+    }
+    const interval = setInterval(() => {
+      console.log("setting interval", timer);
+      let timeleft = timer || 0;
+      setTimer((t) => t - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2.5rem] p-8 shadow-2xl shadow-blue-500/30 border border-white/10">
       <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
@@ -23,17 +44,27 @@ export default function DriverTaskRequestCard({
             Priority {request.type}
           </span>
         </div>
-        <span className="text-blue-100 font-bold text-xs">{request.distance}</span>
+        <span className="text-blue-100 font-bold text-xs">
+          {request.distance}
+        </span>
       </div>
-
-      <div className="space-y-2 mb-8">
-        <h3 className="text-3xl font-black text-white tracking-tight">
-          {request.customerName}
-        </h3>
-        <p className="text-blue-100 font-medium">{request.address}</p>
-        <p className="text-blue-100/90 text-sm">{request.shopName}</p>
+      <div className="flex justify-between">
+        <div className="space-y-2 mb-8">
+          <h3 className="text-3xl font-black text-white tracking-tight">
+            {request.customerName}
+          </h3>
+          <p className="text-blue-100 font-medium">{request.address}</p>
+          <p className="text-blue-100/90 text-sm">{request.shopName}</p>
+        </div>
+        {/* Timer */}
+        {timeout && (
+          <div className="flex items-center justify-center">
+            <div className="flex w-10 h-10 bg-blue-500 rounded-full items-center justify-center">
+              <p>{timer}</p>
+            </div>
+          </div>
+        )}
       </div>
-
       <div className="flex gap-4">
         <button
           type="button"

@@ -6,7 +6,6 @@ import {
 export const convertAssignmentToDriverTask = (
   assignment: DriverAssignmentResponse,
 ): DriverTaskRequest => {
-  console.log("order ====>", assignment);
   const isPickup = assignment.order?.pickup_method == "PICKUP";
   const task: DriverTaskRequest = {
     id: assignment.id,
@@ -28,8 +27,6 @@ export const convertAssignmentToDriverTask = (
     business: assignment.order?.business || null,
     order: assignment?.order || null,
   };
-
-  console.log("driver task map ", task);
 
   return task;
 };

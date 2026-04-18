@@ -34,6 +34,7 @@ export type DriverAssignmentResponse = {
   role: "PICKUP" | "DELIVERY" | "CANCELLED";
   order: LaundryOrder | null;
   status: DriverAssignmentStatus;
+  timeout?: number;
 };
 
 type DriverAssignmentStatus =

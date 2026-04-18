@@ -119,32 +119,21 @@ function Login() {
     onSuccess: async (value) => {
       console.log("value return from the server", value);
       setValue(value);
-      if (value.role === "DRIVER") {
-        try {
-          // const profile = await getDriverByUserId(value.id);
-          // setDriverProfile(profile);
-
-          const permission = await requestFirebaseNotificationPermission();
-          if (permission === "granted") {
-            const fcmToken = await getFcmToken();
-            console.log("Obtained FCM token:", fcmToken);
-            if (fcmToken) {
-              const res = await registerDeviceToken({
-                user_id: value.id,
-                driver_id: value?.driver?.id || null,
-                token: fcmToken,
-                device_type: detectDeviceType(),
-              });
-
-              console.log("Device token registered:", res);
-            }
+      try {
+        const permission = await requestFirebaseNotificationPermission();
+        if (permission === "granted") {
+          const fcmToken = await getFcmToken();
+          if (fcmToken) {
+            await registerDeviceToken({
+              user_id: value.id,
+              driver_id: value.role === "DRIVER" ? (value?.driver?.id ?? null) : null,
+              token: fcmToken,
+              device_type: detectDeviceType(),
+            });
           }
-        } catch (e) {
-          console.log("Failed to load/register driver profile token", e);
-          // setDriverProfile(null);
         }
-      } else {
-        // setDriverProfile(null);
+      } catch (e) {
+        console.log("Failed to register device token", e);
       }
 
       toastCtx.setIsVisible(true);

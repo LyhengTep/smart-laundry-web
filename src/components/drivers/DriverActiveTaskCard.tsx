@@ -1,4 +1,5 @@
 import { DriverTask } from "@/types/driverTask";
+import { getMapDirection } from "@/utils/common";
 import {
   CheckCircle2,
   MessageSquare,
@@ -13,6 +14,7 @@ interface DriverActiveTaskCardProps {
   isCompleting?: boolean;
   completeLabel?: string;
   completeDisabled?: boolean;
+  onCardClick?: (task: DriverTask) => void;
 }
 
 export default function DriverActiveTaskCard({
@@ -21,12 +23,16 @@ export default function DriverActiveTaskCard({
   isCompleting = false,
   completeLabel,
   completeDisabled = false,
+  onCardClick,
 }: DriverActiveTaskCardProps) {
   const canOpenMap =
     typeof task.lat === "number" && typeof task.lng === "number";
   console.log("task in card ", task);
   return (
-    <div className="bg-slate-900 rounded-[2rem] border border-white/5 p-6 hover:border-blue-500/50 transition-all group">
+    <div
+      onClick={() => onCardClick && onCardClick(task)}
+      className="bg-slate-900 rounded-[2rem] w-full border border-white/5 p-6 hover:border-blue-500/50 transition-all group"
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
@@ -61,11 +67,7 @@ export default function DriverActiveTaskCard({
       <p className="text-slate-300 text-sm mb-4">{task.address}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <a
-          href={
-            canOpenMap
-              ? `https://www.google.com/maps/dir/?api=1&destination=${task.status === "PICKED_UP" ? task.lat : task.business?.latitude},${task.status === "PICKED_UP" ? task.lng : task.business?.longitude}`
-              : "#"
-          }
+          href={canOpenMap ? getMapDirection(task) : "#"}
           target={canOpenMap ? "_blank" : undefined}
           rel={canOpenMap ? "noopener noreferrer" : undefined}
           className={`w-full py-4 font-black rounded-2xl transition-all flex items-center justify-center gap-2 border ${
@@ -78,7 +80,10 @@ export default function DriverActiveTaskCard({
         </a>
         <button
           type="button"
-          onClick={() => onComplete?.(task)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onComplete?.(task);
+          }}
           disabled={!onComplete || isCompleting || completeDisabled}
           className="w-full py-4 bg-emerald-600/15 hover:bg-emerald-600 text-emerald-400 hover:text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 border border-emerald-600/30 disabled:opacity-60 disabled:cursor-not-allowed"
         >

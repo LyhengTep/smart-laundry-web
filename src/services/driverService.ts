@@ -36,6 +36,11 @@ export const getDriverByUserId = async (userId: string) => {
   return res?.data?.data ?? res?.data;
 };
 
+export const getDriverActiveAssignment = async () => {
+  const res = await http.get(API_ROUTES.GET_ACTIVE_ASSIGNMENT);
+  return res?.data?.data ?? res?.data;
+};
+
 export const updateDriver = async (
   driverId: string,
   payload: {

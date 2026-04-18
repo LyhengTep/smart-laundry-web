@@ -5,10 +5,10 @@ import { ToastContext } from "@/contexts/ToastProvider";
 import { useLocalStorage } from "@/hooks/localStorage";
 import {
   getFcmToken,
-  registerFcmTokenForUser,
   requestFirebaseNotificationPermission,
   subscribeForegroundMessages,
 } from "@/services/firebaseMessaging";
+import { registerDeviceToken } from "@/services/deviceTokenService";
 import { UserAuthResponse } from "@/types/auth";
 import { useContext, useEffect } from "react";
 
@@ -21,6 +21,13 @@ export default function FirebaseNotificationInit() {
 
   useEffect(() => {
     let unsubscribe: null | (() => void) = null;
+    const detectDeviceType = () => {
+      if (typeof navigator === "undefined") return "web";
+      const ua = navigator.userAgent.toLowerCase();
+      if (/iphone|ipad|ipod/.test(ua)) return "ios";
+      if (/android/.test(ua)) return "android";
+      return "web";
+    };
 
     const setup = async () => {
       try {
@@ -31,9 +38,14 @@ export default function FirebaseNotificationInit() {
         if (token) {
           const key = `FCM_SYNCED:${authUser?.id || "anonymous"}`;
           const lastSyncedToken = localStorage.getItem(key);
-          console.log("Called update message token", authUser?.id);
           if (authUser?.id && lastSyncedToken !== token) {
-            await registerFcmTokenForUser(authUser.id, token);
+            await registerDeviceToken({
+              user_id: authUser.id,
+              driver_id:
+                authUser.role === "DRIVER" ? (authUser.driver?.id ?? null) : null,
+              token,
+              device_type: detectDeviceType(),
+            });
             localStorage.setItem(key, token);
           }
         }
@@ -60,7 +72,7 @@ export default function FirebaseNotificationInit() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [authUser?.id, toastCtx]);
+  }, [authUser?.id, authUser?.role, authUser?.driver?.id, toastCtx]);
 
   return null;
 }

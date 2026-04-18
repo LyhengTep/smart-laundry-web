@@ -3,6 +3,7 @@
 import DriverActiveTaskCard from "@/components/drivers/DriverActiveTaskCard";
 import DriverBottomNav from "@/components/drivers/DriverBottomNav";
 import DriverHistoryTaskCard from "@/components/drivers/DriverHistoryTaskCard";
+import DriverMissionDetail from "@/components/drivers/DriverMissionDetail";
 import DriverStatCard from "@/components/drivers/DriverStatCard";
 import DriverTaskRequestCard from "@/components/drivers/DriverTaskRequestCard";
 import { STORAGE_KEYS } from "@/config/common";
@@ -10,6 +11,7 @@ import { ToastContext } from "@/contexts/ToastProvider";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { convertAssignmentToDriverTask } from "@/lib/objectMapper";
 import { clearAuthSession, logout } from "@/services/authService";
+import { getDriverActiveAssignment } from "@/services/driverService";
 import {
   acceptDriverTask,
   DEFAULT_DRIVER_STATS,
@@ -46,6 +48,22 @@ const getTaskCompletionAction = (task: DriverTask) => {
   return { label: "Mark as Picked Up", nextAction: "picked-up" as const };
 };
 
+const mockDriverTask: DriverTaskRequest = {
+  id: "task-001",
+  orderId: "order-123",
+  orderStatus: "PENDING",
+  customerName: "John Doe",
+  type: "DELIVERY", // adjust based on your enum
+  address: "123 Street, Phnom Penh",
+  shopName: "Clean Laundry Shop",
+  distance: "2.5 km",
+  status: "ACCEPTED", // adjust enum
+  payout: 5.5,
+  lat: 11.5564,
+  lng: 104.9282,
+  business: null,
+  order: null,
+};
 export default function DriverTasksPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DriverTaskTab>("tasks");
@@ -53,10 +71,13 @@ export default function DriverTasksPage() {
   const [newRequest, setNewRequest] = useState<DriverTaskRequest | null>();
   const [activeTasks, setActiveTasks] = useState<DriverTask[]>([]);
   const [historyTasks, setHistoryTasks] = useState<DriverTask[]>([]);
+  const [taskDetail, setTaskDetail] = useState<DriverTaskRequest | null>();
+  const [remainingTime, setRemainingTime] = useState(0);
   const toastCtx = useContext(ToastContext);
   const { value: authUser, setValue: setAuthUser } =
     useLocalStorage<UserAuthResponse | null>(STORAGE_KEYS.AUTH_USER, null);
 
+  console.log("Authuser is ", authUser);
   const wsUrl = useMemo(
     () => getDriverTaskWsUrl(authUser?.driver?.id),
     [authUser?.driver?.id],
@@ -156,6 +177,25 @@ export default function DriverTasksPage() {
     queryFn: () => getDriverHistories(authUser?.driver?.id || ""),
   });
 
+  //Query active package for driver in case of web socket is not available
+  const { data: activeAssignment } = useQuery({
+    queryKey: ["active-assignment"],
+    queryFn: getDriverActiveAssignment,
+  });
+
+  useEffect(() => {
+    console.log("Active assignment", activeAssignment);
+    if (!activeAssignment?.assignment) return;
+    setNewRequest(
+      convertAssignmentToDriverTask(
+        activeAssignment?.assignment as DriverAssignmentResponse,
+      ),
+    );
+    setRemainingTime(activeAssignment?.timeout);
+  }, [activeAssignment]);
+
+  //End
+
   useEffect(() => {
     console.log("Fetched driver tasks:", driverTasks?.items);
     setActiveTasks(
@@ -202,6 +242,7 @@ export default function DriverTasksPage() {
           setNewRequest(
             convertAssignmentToDriverTask(payload as DriverAssignmentResponse),
           );
+          setRemainingTime(payload?.timeout || 0);
         }
       } catch (error) {
         console.warn("Failed to parse WebSocket message:", error);
@@ -258,9 +299,15 @@ export default function DriverTasksPage() {
     }
   };
 
+  // return (
+  //   <main className="mx-auto min-h-screen p-6 bg-red-500">
+  //     <DriverMissionDetail />
+  //   </main>
+  // );
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-32">
-      <header className="p-6 sticky top-0 z-50 bg-slate-950/80 backdrop-blur-lg border-b border-white/5">
+      <header className="p-6 sticky top-0 z-30 bg-slate-950/80 backdrop-blur-lg border-b border-white/5">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -297,13 +344,15 @@ export default function DriverTasksPage() {
       </header>
 
       <main className="max-w-2xl mx-auto p-6">
-        {activeTab === "tasks" && (
+        {activeTab === "tasks" && !taskDetail && (
           <div className="space-y-8 animate-in fade-in duration-500">
             {newRequest && (
               <DriverTaskRequestCard
                 request={newRequest}
                 onAccept={handleAcceptRequest}
                 onReject={() => setNewRequest(null)}
+                timeout={remainingTime}
+                onClose={() => setNewRequest(null)}
               />
             )}
 
@@ -320,6 +369,9 @@ export default function DriverTasksPage() {
                       <DriverActiveTaskCard
                         key={task.id}
                         task={task}
+                        onCardClick={(task) => {
+                          setTaskDetail(task);
+                        }}
                         onComplete={handleCompleteTask}
                         isCompleting={isCompletingTask}
                         completeLabel={action.label}
@@ -412,6 +464,15 @@ export default function DriverTasksPage() {
       </main>
 
       <DriverBottomNav activeTab={activeTab} onChange={setActiveTab} />
+      {taskDetail && (
+        <DriverMissionDetail
+          open={taskDetail ? true : false}
+          onClose={() => {
+            setTaskDetail(null);
+          }}
+          data={taskDetail}
+        />
+      )}
     </div>
   );
 }

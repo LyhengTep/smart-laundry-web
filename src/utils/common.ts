@@ -1,4 +1,5 @@
 import { UserAuthResponse } from "@/types/auth";
+import { DriverTask } from "@/types/driverTask";
 
 export const formatLaundryServiceType = (type: string) => {
   switch (type) {
@@ -41,4 +42,8 @@ export const getQuickLink = (user: UserAuthResponse | null) => {
     return { href: "/admin/drivers", label: "Dashboard" };
   }
   return { href: "/", label: "Dashboard" };
+};
+
+export const getMapDirection = (task: DriverTask) => {
+  return `https://www.google.com/maps/dir/?api=1&destination=${task.status === "PICKED_UP" ? task.business?.latitude : task.lat},${task.status === "PICKED_UP" ? task.business?.longitude : task.lng}`;
 };
