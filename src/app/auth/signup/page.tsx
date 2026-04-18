@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
+import { Suspense, useContext, useEffect, useState } from "react";
 import {
   FieldErrors,
   SubmitHandler,
@@ -91,7 +91,7 @@ const roles: Record<string, RoleSelectorValues> = {
   },
 };
 
-export default function SignupPage() {
+function SignupPageContent() {
   const toastCtx = useContext(ToastContext);
   const [userType, setUserType] = useState<RoleKeys>("CUSTOMER");
   const router = useRouter();
@@ -527,5 +527,13 @@ export default function SignupPage() {
       {/* {isLoading && } */}
       {/* <Loading /> */}
     </>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SignupPageContent />
+    </Suspense>
   );
 }
