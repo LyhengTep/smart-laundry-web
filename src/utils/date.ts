@@ -10,3 +10,10 @@ export const formatDateUTC7 = (value?: string) => {
   }).format(date);
   return formatted.replace(/\//g, "-");
 };
+
+export const toTimeMinutes = (value?: string) => {
+  if (!value) return null;
+  const date = new Date(`1970-01-01T${value}`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getUTCHours() * 60 + date.getUTCMinutes();
+};

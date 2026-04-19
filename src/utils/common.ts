@@ -1,3 +1,4 @@
+import { BASE_URL, DEFAULT_SHOP_IMAGE } from "@/config/common";
 import { UserAuthResponse } from "@/types/auth";
 import { DriverTask } from "@/types/driverTask";
 
@@ -46,4 +47,26 @@ export const getQuickLink = (user: UserAuthResponse | null) => {
 
 export const getMapDirection = (task: DriverTask) => {
   return `https://www.google.com/maps/dir/?api=1&destination=${task.status === "PICKED_UP" ? task.business?.latitude : task.lat},${task.status === "PICKED_UP" ? task.business?.longitude : task.lng}`;
+};
+
+export const resolveBusinessImage = (value?: string) => {
+  if (!value || value === "string") return DEFAULT_SHOP_IMAGE;
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+  return `${BASE_URL}${value}`;
+};
+
+export const formatTime = (value?: string) => {
+  if (!value) return "-";
+  const date = new Date(`1970-01-01T${value}`);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };

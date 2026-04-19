@@ -11,3 +11,5 @@ export const UoM = {
 };
 
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+export const DEFAULT_SHOP_IMAGE =
+  "https://images.unsplash.com/photo-1545173168-9f1947e8017e?q=80&w=1200";

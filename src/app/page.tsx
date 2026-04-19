@@ -2,34 +2,18 @@
 
 import Navbar from "@/components/Navbar";
 import { NavDrawer } from "@/components/NavDrawer";
-import { BASE_URL, STORAGE_KEYS } from "@/config/common";
+import { ShopCard } from "@/components/ShopCard";
+import { STORAGE_KEYS } from "@/config/common";
 import { useBusinesses } from "@/hooks/businesses/businessHook";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { clearAuthSession, logout } from "@/services/authService";
 import { UserAuthResponse } from "@/types/auth";
 import { Business } from "@/types/business";
 import { getQuickLink } from "@/utils/common";
-import { Clock3, MapPin, Star } from "lucide-react";
+import { toTimeMinutes } from "@/utils/date";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-
-const toTimeMinutes = (value?: string) => {
-  if (!value) return null;
-  const date = new Date(`1970-01-01T${value}`);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.getUTCHours() * 60 + date.getUTCMinutes();
-};
-
-const formatTime = (value?: string) => {
-  if (!value) return "-";
-  const date = new Date(`1970-01-01T${value}`);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 const isAvailableBusiness = (status?: string) => {
   const normalized = (status || "").toUpperCase();
@@ -55,27 +39,12 @@ const isOpenNow = (business: Business) => {
   return currentMinutes >= open || currentMinutes < close;
 };
 
-const DEFAULT_SHOP_IMAGE =
-  "https://images.unsplash.com/photo-1545173168-9f1947e8017e?q=80&w=1200";
-
-const resolveBusinessImage = (value?: string) => {
-  if (!value || value === "string") return DEFAULT_SHOP_IMAGE;
-  if (
-    value.startsWith("http://") ||
-    value.startsWith("https://") ||
-    value.startsWith("blob:")
-  ) {
-    return value;
-  }
-  return `${BASE_URL}${value}`;
-};
-
 export default function Home() {
   const { value, setValue } = useLocalStorage<UserAuthResponse | null>(
     STORAGE_KEYS.AUTH_USER,
     null,
   );
-  const { data, isLoading, isError } = useBusinesses({ page: 1, size: 12 });
+  const { data, isLoading, isError } = useBusinesses({ page: 1, size: 3 });
   const [showOpenOnly, setShowOpenOnly] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -192,7 +161,7 @@ export default function Home() {
               </button>
             </div>
             <Link
-              href="/test/home"
+              href="/businesses"
               className="text-sm font-bold text-blue-600 hover:text-blue-700 transition"
             >
               View all shops
@@ -244,81 +213,81 @@ export default function Home() {
   );
 }
 
-function ShopCard({ shop }: { shop: Business }) {
-  const open = isOpenNow(shop);
-  const imageUrl = resolveBusinessImage(
-    shop.cover_image_url || shop.profile_image_url,
-  );
+// function ShopCard({ shop }: { shop: Business }) {
+//   const open = isOpenNow(shop);
+//   const imageUrl = resolveBusinessImage(
+//     shop.cover_image_url || shop.profile_image_url,
+//   );
 
-  return (
-    <article
-      className={`group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 dark:border-slate-800 flex flex-col ${
-        !open && "opacity-80"
-      } hover:-translate-y-0.5`}
-    >
-      <Link href={`/businesses/${shop.id}`} className="block">
-        <div className="relative h-48">
-          <img
-            src={imageUrl}
-            className={`w-full h-full object-cover ${!open && "grayscale"}`}
-            alt={shop.name}
-            onError={(e) => {
-              if (e.currentTarget.src === DEFAULT_SHOP_IMAGE) return;
-              e.currentTarget.src = DEFAULT_SHOP_IMAGE;
-            }}
-          />
-          <span
-            className={`absolute top-4 right-4 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider ${
-              open ? "bg-green-500" : "bg-slate-500"
-            }`}
-          >
-            {open ? "OPEN" : "CLOSED"}
-          </span>
-        </div>
-        <div className="p-6 flex flex-1 flex-col">
-          <div className="flex justify-between items-start mb-2 gap-2">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 line-clamp-1">
-              {shop.name}
-            </h3>
-            <div className="flex items-center gap-1 text-amber-500 font-bold shrink-0">
-              <Star size={14} fill="currentColor" />
-              <span className="text-sm">
-                {(shop.rating_avg ?? 0).toFixed(1)}
-              </span>
-            </div>
-          </div>
+//   return (
+//     <article
+//       className={`group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 dark:border-slate-800 flex flex-col ${
+//         !open && "opacity-80"
+//       } hover:-translate-y-0.5`}
+//     >
+//       <Link href={`/businesses/${shop.id}`} className="block">
+//         <div className="relative h-48">
+//           <img
+//             src={imageUrl}
+//             className={`w-full h-full object-cover ${!open && "grayscale"}`}
+//             alt={shop.name}
+//             onError={(e) => {
+//               if (e.currentTarget.src === DEFAULT_SHOP_IMAGE) return;
+//               e.currentTarget.src = DEFAULT_SHOP_IMAGE;
+//             }}
+//           />
+//           <span
+//             className={`absolute top-4 right-4 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider ${
+//               open ? "bg-green-500" : "bg-slate-500"
+//             }`}
+//           >
+//             {open ? "OPEN" : "CLOSED"}
+//           </span>
+//         </div>
+//         <div className="p-6 flex flex-1 flex-col">
+//           <div className="flex justify-between items-start mb-2 gap-2">
+//             <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 line-clamp-1">
+//               {shop.name}
+//             </h3>
+//             <div className="flex items-center gap-1 text-amber-500 font-bold shrink-0">
+//               <Star size={14} fill="currentColor" />
+//               <span className="text-sm">
+//                 {(shop.rating_avg ?? 0).toFixed(1)}
+//               </span>
+//             </div>
+//           </div>
 
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-2 line-clamp-2 flex items-start gap-2">
-            <MapPin
-              size={14}
-              className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500"
-            />
-            <span>{shop.address || "-"}</span>
-          </p>
-          <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2">
-            <Clock3
-              size={14}
-              className="shrink-0 text-slate-400 dark:text-slate-500"
-            />
-            <span>
-              {formatTime(shop.open_time)} - {formatTime(shop.close_time)}
-            </span>
-          </p>
-        </div>
-      </Link>
+//           <p className="text-slate-500 dark:text-slate-400 text-sm mb-2 line-clamp-2 flex items-start gap-2">
+//             <MapPin
+//               size={14}
+//               className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500"
+//             />
+//             <span>{shop.address || "-"}</span>
+//           </p>
+//           <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2">
+//             <Clock3
+//               size={14}
+//               className="shrink-0 text-slate-400 dark:text-slate-500"
+//             />
+//             <span>
+//               {formatTime(shop.open_time)} - {formatTime(shop.close_time)}
+//             </span>
+//           </p>
+//         </div>
+//       </Link>
 
-      <div className="px-6 pb-6 mt-auto">
-        <Link
-          href={`/businesses/${shop.id}/order`}
-          className={`w-full py-3 font-bold rounded-2xl transition-all flex items-center justify-center text-center ${
-            open
-              ? "bg-slate-900 text-white hover:bg-blue-600"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-          }`}
-        >
-          Order Now
-        </Link>
-      </div>
-    </article>
-  );
-}
+//       <div className="px-6 pb-6 mt-auto">
+//         <Link
+//           href={`/businesses/${shop.id}/order`}
+//           className={`w-full py-3 font-bold rounded-2xl transition-all flex items-center justify-center text-center ${
+//             open
+//               ? "bg-slate-900 text-white hover:bg-blue-600"
+//               : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+//           }`}
+//         >
+//           Order Now
+//         </Link>
+//       </div>
+//     </article>
+//   );
+// }
