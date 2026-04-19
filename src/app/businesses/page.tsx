@@ -8,7 +8,7 @@ import { useBusinesses } from "@/hooks/businesses/businessHook";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { UserAuthResponse } from "@/types/auth";
 import { Business } from "@/types/business";
-import { ChevronRight, Link, Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
 const mockBusiness: Business = {
@@ -31,6 +31,8 @@ const mockBusiness: Business = {
 };
 export default function AllShopsPage() {
   const [nextPage, setNextPage] = useState(1);
+  const [isOpenFilter, setIsOpenFilter] = useState<boolean | undefined>();
+  const [search, setSearch] = useState("");
   const { value, setValue } = useLocalStorage<UserAuthResponse | null>(
     STORAGE_KEYS.AUTH_USER,
     null,
@@ -44,11 +46,11 @@ export default function AllShopsPage() {
   const { data, isLoading, isError } = useBusinesses({
     page: nextPage,
     size: 10,
+    is_open: isOpenFilter,
+    q: search,
   });
 
   console.log("data after fetched ====>", data);
-
-  if (isLoading) return <p>Loading......</p>;
 
   return (
     <div className="min-h-screen text-white">
@@ -85,6 +87,8 @@ export default function AllShopsPage() {
               />
               <input
                 type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search shops..."
                 className="w-full text-foreground border border-foreground/50 placeholder-foreground/10 rounded-2xl py-3.5 pl-12 pr-4 focus:border-blue-500 outline-none transition-all"
               />
@@ -99,57 +103,59 @@ export default function AllShopsPage() {
           <div className="flex items-center gap-6">
             {/* Existing Filter Pills */}
             <div className="flex gap-2">
-              <button className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold">
+              <button
+                onClick={() => setIsOpenFilter(undefined)}
+                className={`${isOpenFilter ? "bg-background text-slate-400 border border-forground/50 hover:border-blue-500 hover:text-blue-500" : "bg-blue-600 text-white"} px-4 py-1.5 rounded-lg text-sm font-bold`}
+              >
                 All
               </button>
-              <button className="bg-background text-slate-400 px-4 py-1.5 rounded-lg text-sm font-bold border border-forground/50 hover:border-blue-500 hover:text-blue-500">
+              <button
+                onClick={() => setIsOpenFilter(true)}
+                className={`${isOpenFilter ? "bg-blue-600 text-white" : "bg-background text-slate-400 border border-forground/50 hover:border-blue-500 hover:text-blue-500"} px-4 py-1.5 rounded-lg text-sm font-bold`}
+              >
                 Open Now
               </button>
             </div>
-
-            {/* New "View All" Button */}
-            <Link
-              href="/shops"
-              className="group flex items-center gap-2 text-blue-500 hover:text-blue-400 transition-all"
-            >
-              <span className="text-xs font-black uppercase tracking-widest">
-                View All Shops
-              </span>
-              <ChevronRight
-                size={16}
-                className="group-hover:translate-x-1 transition-transform"
-              />
-            </Link>
           </div>
         </div>
         {/* --- DYNAMIC GRID --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {data?.items.map((shop) => (
-            <ShopCard key={shop.id} shop={shop} />
-          ))}
-        </div>
+
+        {isLoading ? (
+          <p>Loading......</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {data?.items.map((shop) => (
+              <ShopCard key={shop.id} shop={shop} />
+            ))}
+          </div>
+        )}
 
         {/* --- PAGINATION --- */}
-        <ListingPagination
-          currentPage={nextPage}
-          pages={data?.pages || 0}
-          onForward={() => {
-            setNextPage((currentPage) => {
-              return currentPage == data?.total ? currentPage : currentPage + 1;
-            });
-          }}
-          onBackward={() => {
-            setNextPage((currentPage) => {
-              return currentPage == 1 ? currentPage : currentPage - 1;
-            });
-          }}
-          onPageClick={(page) => {
-            let validPage = Number(page);
-            if (!isNaN(validPage)) {
-              setNextPage(validPage);
-            }
-          }}
-        />
+
+        {search == "" && !isLoading && (
+          <ListingPagination
+            currentPage={nextPage}
+            pages={data?.pages || 0}
+            onForward={() => {
+              setNextPage((currentPage) => {
+                return currentPage == data?.total
+                  ? currentPage
+                  : currentPage + 1;
+              });
+            }}
+            onBackward={() => {
+              setNextPage((currentPage) => {
+                return currentPage == 1 ? currentPage : currentPage - 1;
+              });
+            }}
+            onPageClick={(page) => {
+              let validPage = Number(page);
+              if (!isNaN(validPage)) {
+                setNextPage(validPage);
+              }
+            }}
+          />
+        )}
       </main>
     </div>
   );

@@ -10,7 +10,7 @@ import {
 } from "@/types/business";
 
 export const getBusinesses = async (
-  params?: Record<string, string | number | boolean>,
+  params?: Record<string, string | number | boolean | undefined>,
 ): Promise<BusinessListResponse> => {
   const res = await http.get<BusinessListResponse>(
     API_ROUTES.FETCH_BUSINESSES,
