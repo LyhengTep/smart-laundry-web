@@ -138,7 +138,7 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex gap-2 bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+            {/* <div className="flex gap-2 bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
               <button
                 onClick={() => setShowOpenOnly(false)}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
@@ -159,7 +159,7 @@ export default function Home() {
               >
                 Open Now
               </button>
-            </div>
+            </div> */}
             <Link
               href="/businesses"
               className="text-sm font-bold text-blue-600 hover:text-blue-700 transition"

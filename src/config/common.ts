@@ -12,4 +12,4 @@ export const UoM = {
 
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 export const DEFAULT_SHOP_IMAGE =
-  "https://images.unsplash.com/photo-1545173168-9f1947e8017e?q=80&w=1200";
+  "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";

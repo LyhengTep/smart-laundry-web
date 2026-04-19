@@ -30,9 +30,9 @@ const isOpenNow = (business: Business) => {
 };
 export function ShopCard({ shop }: { shop: Business }) {
   const open = isOpenNow(shop);
-  const imageUrl = resolveBusinessImage(
-    shop.cover_image_url || shop.profile_image_url,
-  );
+  const imageUrl =
+    resolveBusinessImage(shop.cover_image_url || shop.profile_image_url) ||
+    DEFAULT_SHOP_IMAGE;
 
   return (
     <article
@@ -47,7 +47,8 @@ export function ShopCard({ shop }: { shop: Business }) {
             className={`w-full h-full object-cover ${!open && "grayscale"}`}
             alt={shop.name}
             onError={(e) => {
-              if (e.currentTarget.src === DEFAULT_SHOP_IMAGE) return;
+              if (e.currentTarget.dataset.fallbackApplied === "true") return;
+              e.currentTarget.dataset.fallbackApplied = "true";
               e.currentTarget.src = DEFAULT_SHOP_IMAGE;
             }}
           />
