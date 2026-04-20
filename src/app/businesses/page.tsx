@@ -3,10 +3,8 @@
 import { ListingPagination } from "@/components/ListingPagination";
 import Navbar from "@/components/Navbar";
 import { ShopCard } from "@/components/ShopCard";
-import { STORAGE_KEYS } from "@/config/common";
+import { useLogout } from "@/hooks/auths/logoutHook";
 import { useBusinesses } from "@/hooks/businesses/businessHook";
-import { useLocalStorage } from "@/hooks/localStorage";
-import { UserAuthResponse } from "@/types/auth";
 import { Business } from "@/types/business";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -33,16 +31,9 @@ export default function AllShopsPage() {
   const [nextPage, setNextPage] = useState(1);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean | undefined>();
   const [search, setSearch] = useState("");
-  const { value, setValue } = useLocalStorage<UserAuthResponse | null>(
-    STORAGE_KEYS.AUTH_USER,
-    null,
-  );
 
-  // const { data } = useQuery({
-  //   queryKey: ["all_shops"],
-  //   queryFn: () => getBusinesses(),
-  //   staleTime: 1000 * 60 * 5,
-  // });
+  const { logout, currentUser } = useLogout();
+
   const { data, isLoading, isError } = useBusinesses({
     page: nextPage,
     size: 10,
@@ -57,12 +48,12 @@ export default function AllShopsPage() {
       {/* --- HEADER (Matching your design) --- */}
 
       <Navbar
-        user={value}
+        user={currentUser}
         onDrawerClick={() => {
           // setIsDrawerOpen(true)
         }}
         onLogout={() => {
-          // doLogout();
+          logout();
         }}
       />
 

@@ -37,7 +37,7 @@ export type DriverAssignmentResponse = {
   timeout?: number;
 };
 
-type DriverAssignmentStatus =
+export type DriverAssignmentStatus =
   | "ACCEPTED"
   | "PICKED_UP"
   | "DELIVERED"

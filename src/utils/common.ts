@@ -70,3 +70,18 @@ export const formatTime = (value?: string) => {
     minute: "2-digit",
   });
 };
+
+export const getDriverActiveTaskLabel = (status: string | undefined) => {
+  switch (status) {
+    case "PICKED_UP":
+      return { label: "Mark as Delivered", nextAction: "delivered" as const };
+    case "DELIVERED_TO_SHOP":
+      return { label: "Completed", nextAction: null };
+    case "OUT_FOR_DELIVERY":
+      return { label: "Mark as Delivered", nextAction: "delivered" as const };
+    case "DELIVERED":
+      return { label: "Completed", nextAction: null };
+    default:
+      return { label: "Mark as Picked Up", nextAction: "picked-up" as const };
+  }
+};

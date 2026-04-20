@@ -28,6 +28,7 @@ import {
   DriverTaskRequest,
   DriverTaskTab,
 } from "@/types/driverTask";
+import { getDriverActiveTaskLabel } from "@/utils/common";
 import { toToastMessage } from "@/utils/toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -257,7 +258,7 @@ export default function DriverTasksPage() {
   };
 
   const handleCompleteTask = (task: DriverTask) => {
-    const action = getTaskCompletionAction(task);
+    const action = getDriverActiveTaskLabel(task.orderStatus);
     if (!task.id) {
       toastCtx.setToast?.({
         error: true,
@@ -364,7 +365,7 @@ export default function DriverTasksPage() {
               {activeTasks?.length > 0 ? (
                 activeTasks.map((task) =>
                   (() => {
-                    const action = getTaskCompletionAction(task);
+                    const action = getDriverActiveTaskLabel(task.status);
                     return (
                       <DriverActiveTaskCard
                         key={task.id}
