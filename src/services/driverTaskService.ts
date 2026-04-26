@@ -48,11 +48,17 @@ export const getDriverTasks = async (driverId: string) => {
   return res?.data;
 };
 
-export const getDriverHistories = async (driverId: string) => {
+export const getDriverHistories = async (
+  driverId: string,
+  page = 1,
+  size = 5,
+) => {
   const res = await http.get(API_ROUTES.DRIVER_ASSIGNEMNTS, {
     params: {
       driver_id: driverId,
       status_not_in: ["ACCEPTED", "PICKED_UP"],
+      page,
+      size,
     },
     paramsSerializer: (params) =>
       qs.stringify(params, { arrayFormat: "repeat" }),
@@ -61,9 +67,13 @@ export const getDriverHistories = async (driverId: string) => {
   return res?.data;
 };
 
-export const markAssignmentPickedUp = async (assignmentId: string) => {
+export const markAssignmentPickedUp = async (
+  assignmentId: string,
+  deliveryFeePaidBy: "CUSTOMER" | "SHOP",
+) => {
   const response = await http.patch(
     API_ROUTES.MARK_ASSIGNMENT_PICKED_UP(assignmentId),
+    { delivery_fee_paid_by: deliveryFeePaidBy },
   );
   return response.data;
 };
@@ -72,6 +82,13 @@ export const markAssignmentDelivered = async (assignmentId: string) => {
   const response = await http.patch(
     API_ROUTES.MARK_ASSIGNMENT_DELIVERED(assignmentId),
   );
+  return response.data;
+};
+
+export const confirmPaymentByDriver = async (paymentId: string) => {
+  const response = await http.post(API_ROUTES.CONFIRM_PAYMENT(paymentId), {
+    confirmed_by: "DRIVER",
+  });
   return response.data;
 };
 export const DEFAULT_DRIVER_REQUEST: DriverTaskRequest = {
@@ -83,6 +100,7 @@ export const DEFAULT_DRIVER_REQUEST: DriverTaskRequest = {
   distance: "0.8 km",
   payout: 4.5,
   status: "ACCEPTED",
+  cost: 1,
 };
 
 export const DEFAULT_ACTIVE_DRIVER_TASKS: DriverTaskRequest[] = [
@@ -95,6 +113,7 @@ export const DEFAULT_ACTIVE_DRIVER_TASKS: DriverTaskRequest[] = [
     distance: "1.2 km",
     status: "ACCEPTED",
     payout: 5.2,
+    cost: 1,
   },
 ];
 

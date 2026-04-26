@@ -24,6 +24,7 @@ export default function OrderStatusPill({
     PROCESSING: "bg-violet-50 text-violet-700 border-violet-100",
     READY_FOR_DELIVERY: "bg-green-50 text-green-600 border-green-100",
     DELIVERY_ASSIGNED: "bg-lime-50 text-lime-700 border-lime-100",
+    PICKED_UP_DELIVERY: "bg-yellow-50 text-yellow-700 border-yellow-100",
     OUT_FOR_DELIVERY: "bg-emerald-50 text-emerald-600 border-emerald-100",
     DONE: "bg-green-50 text-green-600 border-green-100",
     DELIVERED: "bg-green-50 text-green-600 border-green-100",

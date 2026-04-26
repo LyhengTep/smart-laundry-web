@@ -16,6 +16,8 @@ export type OrderItem = {
   subtotal?: number;
   discount?: number;
   total?: number;
+  pickupFee?: number | null;
+  deliveryFee?: number | null;
   lineItems?: OrderLineItem[];
 };
 
@@ -24,6 +26,19 @@ export type PendingOrderItem = {
   title: string;
   subtitle: string;
   meta: string;
+  customer: string;
+  pickupAddress?: string;
+  deliveryAddress?: string;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
+  scheduledPickupAt?: string;
+  scheduledDropoffAt?: string;
+  notes?: string;
+  total: number;
+  pickupFee?: number | null;
+  lineItems: OrderLineItem[];
 };
 
 export type OrderLineItem = {

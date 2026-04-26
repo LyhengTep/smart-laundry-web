@@ -67,6 +67,24 @@ export const deleteBusiness = async (business_id: string) => {
   return res.data;
 };
 
+export const getBusinessRevenue = async (
+  businessId: string,
+): Promise<{ business_id: string; total_revenue: string; currency: string }> => {
+  const res = await http.get(API_ROUTES.GET_BUSINESS_REVENUE(businessId));
+  return res?.data?.data ?? res?.data;
+};
+
+export const updateBusinessStatus = async (
+  id: string,
+  status: "OPEN" | "CLOSED",
+): Promise<BusinessResponse> => {
+  const res = await http.patch<BusinessResponse>(
+    API_ROUTES.UPDATE_BUSINESS_STATUS(id),
+    { status },
+  );
+  return res.data;
+};
+
 export const updateBusiness = async (
   id: string,
   data: BusinessUpdateRequest,

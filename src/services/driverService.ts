@@ -69,3 +69,12 @@ export const suspendDriver = async (driverId: string) => {
 
   return res?.data;
 };
+
+export const getDriverRevenue = async (): Promise<{
+  driver_id: string;
+  total_revenue: string;
+  currency: string;
+}> => {
+  const res = await http.get(API_ROUTES.GET_DRIVER_REVENUE);
+  return res?.data?.data ?? res?.data;
+};

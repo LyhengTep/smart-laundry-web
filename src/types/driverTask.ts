@@ -9,17 +9,24 @@ export interface DriverTaskRequest {
   id: string;
   orderId?: string;
   orderStatus?: string;
+  deliveryFeePaidBy?: "CUSTOMER" | "SHOP" | null;
   customerName: string;
   type: DriverTaskType;
   address: string;
   shopName: string;
   distance: string;
+  cost: number;
   status: DriverAssignmentStatus;
   payout: number;
   lat?: number | null;
   lng?: number | null;
   business?: Business | null;
   order?: LaundryOrder | null;
+  role?: string;
+  pickupFee?: number;
+  deliveryFee?: number;
+  subtotal?: number;
+  total?: number;
 }
 
 // export interface DriverAssignment {
@@ -35,6 +42,7 @@ export type DriverAssignmentResponse = {
   order: LaundryOrder | null;
   status: DriverAssignmentStatus;
   timeout?: number;
+  cost: number;
 };
 
 export type DriverAssignmentStatus =

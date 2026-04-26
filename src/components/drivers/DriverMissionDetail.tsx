@@ -2,7 +2,7 @@
 
 import { DriverTask } from "@/types/driverTask";
 import { getMapDirection } from "@/utils/common";
-import { Clock, MessageSquare, Navigation, Package, Phone } from "lucide-react";
+import { MessageSquare, Navigation, Package, Phone } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
 type DriverMissionDetailProps = {
@@ -152,26 +152,73 @@ export default function DriverMissionDetail(props: DriverMissionDetailProps) {
           </div>
         </div>
 
-        {/* EARNINGS CARD (Matching your Blue Highlight Style) */}
-        <div className="bg-blue-600 rounded-[2.5rem] p-8 shadow-2xl shadow-blue-600/20 relative overflow-hidden group">
-          <div className="flex justify-between items-start relative z-10">
-            <div className="space-y-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
-                <Package size={24} />
-              </div>
-              <div className="flex items-center gap-2 text-blue-100/80">
-                <Clock size={14} />
-                <span className="text-[10px] font-black uppercase">
-                  12 Mins Away
+        {/* EARNINGS CARD */}
+        <div className="bg-blue-600 rounded-[2.5rem] p-8 shadow-2xl shadow-blue-600/20 relative overflow-hidden">
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
+              <Package size={24} />
+            </div>
+            <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest">
+              {props.data.type === "PICKUP" ? "Pickup Fee Summary" : "Collection Summary"}
+            </p>
+          </div>
+
+          <div className="relative z-10 space-y-2">
+            {props.data.type === "PICKUP" ? (
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-blue-100">Pickup Fee</span>
+                <span className="text-3xl font-black text-white">
+                  ${(props.data.pickupFee ?? 0).toFixed(2)}
                 </span>
               </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest">
-                Payout
-              </p>
-              <p className="text-4xl font-black text-white">$4.50</p>
-            </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-sm font-bold text-blue-100">Service Fee</span>
+                  <span className="text-lg font-black text-white">
+                    ${(props.data.order?.subtotal ?? 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-sm font-bold text-blue-100">Delivery Fee</span>
+                  <span className="text-lg font-black text-white">
+                    ${(props.data.order?.delivery_fee && props.data.order.delivery_fee > 0
+                      ? props.data.order.delivery_fee
+                      : (props.data.order?.pickup_fee ?? 0)
+                    ).toFixed(2)}
+                  </span>
+                </div>
+                {props.data.order?.has_advance_settlement && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-sm font-bold text-blue-100 flex items-center gap-2">
+                      Pickup Fee
+                      <span className="text-[9px] font-black uppercase tracking-widest bg-amber-400/30 text-amber-200 px-2 py-0.5 rounded-full border border-amber-300/30">
+                        Advance
+                      </span>
+                    </span>
+                    <span className="text-lg font-black text-white">
+                      ${(props.data.order?.pickup_fee ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {(() => {
+                  const dFee = props.data.order?.delivery_fee && props.data.order.delivery_fee > 0
+                    ? props.data.order.delivery_fee
+                    : (props.data.order?.pickup_fee ?? 0);
+                  const advanceFee = props.data.order?.has_advance_settlement ? (props.data.order?.pickup_fee ?? 0) : 0;
+                  return (
+                    <div className="border-t border-white/20 mt-2 pt-3 flex justify-between items-center">
+                      <span className="text-[10px] font-black text-blue-200 uppercase tracking-widest">
+                        Total to Collect
+                      </span>
+                      <span className="text-3xl font-black text-white">
+                        ${((props.data.order?.subtotal ?? 0) + dFee + advanceFee).toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
           </div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 blur-3xl rounded-full" />
         </div>
@@ -242,12 +289,24 @@ export default function DriverMissionDetail(props: DriverMissionDetailProps) {
                 </p>
               </div>
               <div className="flex gap-3">
-                <button className="flex-1 py-4 bg-slate-900/50 border border-white/5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                <a
+                  href={`tel:${props.data.type === "DELIVERY" ? props.data.order?.customer?.phone : props.data.business?.phone}`}
+                  className="flex-1 py-4 bg-slate-900/50 border border-white/5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                >
                   <Phone size={16} className="text-green-500" /> Call
-                </button>
-                <button className="flex-1 py-4 bg-slate-900/50 border border-white/5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                  <MessageSquare size={16} className="text-blue-500" /> Chat
-                </button>
+                </a>
+                <div className="relative flex-1 group/chat">
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-4 bg-slate-900/30 border border-white/5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600 cursor-not-allowed"
+                  >
+                    <MessageSquare size={16} /> Chat
+                  </button>
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-700 text-slate-300 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full opacity-0 group-hover/chat:opacity-100 transition-opacity pointer-events-none">
+                    Coming Soon
+                  </span>
+                </div>
               </div>
             </div>
           </div>

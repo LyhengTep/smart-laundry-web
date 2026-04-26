@@ -78,9 +78,11 @@ export const getDriverActiveTaskLabel = (status: string | undefined) => {
     case "DELIVERED_TO_SHOP":
       return { label: "Completed", nextAction: null };
     case "OUT_FOR_DELIVERY":
-      return { label: "Mark as Delivered", nextAction: "delivered" as const };
+      return { label: "Mark as Delivered", nextAction: "picked-up" as const };
     case "DELIVERED":
       return { label: "Completed", nextAction: null };
+    case "PICKED_UP_DELIVERY":
+      return { label: "Mark as Delivered", nextAction: "delivered" as const };
     default:
       return { label: "Mark as Picked Up", nextAction: "picked-up" as const };
   }

@@ -27,6 +27,7 @@ export const API_ROUTES = {
     `/drivers/assignments/${assignmentId}/picked-up`,
   MARK_ASSIGNMENT_DELIVERED: (assignmentId: string) =>
     `/drivers/assignments/${assignmentId}/delivered`,
+  CONFIRM_PAYMENT: (paymentId: string) => `/payments/${paymentId}/confirm`,
 
   DRIVER_ASSIGNEMNTS: "/drivers/assignments/",
   DEVICE_TOKENS: "/device-tokens",
@@ -38,4 +39,7 @@ export const API_ROUTES = {
     `/device-tokens/by-driver/${driver_id}`,
 
   GET_ACTIVE_ASSIGNMENT: "/drivers/pending/get-current-assignment",
+  GET_DRIVER_REVENUE: "/drivers/me/revenue",
+  GET_BUSINESS_REVENUE: (businessId: string) => `/businesses/${businessId}/revenue`,
+  UPDATE_BUSINESS_STATUS: (businessId: string) => `/businesses/${businessId}/status`,
 };

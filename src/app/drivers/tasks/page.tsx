@@ -1,11 +1,14 @@
 "use client";
 
+import CollectFromCustomerModal from "@/components/CollectFromCustomerModal";
+import CollectFromShopModal from "@/components/CollectFromShopModal";
 import DriverActiveTaskCard from "@/components/drivers/DriverActiveTaskCard";
 import DriverBottomNav from "@/components/drivers/DriverBottomNav";
-import DriverHistoryTaskCard from "@/components/drivers/DriverHistoryTaskCard";
+import DriverHistoryTab from "@/components/drivers/DriverHistoryTab";
 import DriverMissionDetail from "@/components/drivers/DriverMissionDetail";
-import DriverStatCard from "@/components/drivers/DriverStatCard";
+import DriverProfileTab from "@/components/drivers/DriverProfileTab";
 import DriverTaskRequestCard from "@/components/drivers/DriverTaskRequestCard";
+import PaymentAcceptanceModal from "@/components/PaymentAcceptanceModal";
 import { STORAGE_KEYS } from "@/config/common";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { useLocalStorage } from "@/hooks/localStorage";
@@ -14,8 +17,7 @@ import { clearAuthSession, logout } from "@/services/authService";
 import { getDriverActiveAssignment } from "@/services/driverService";
 import {
   acceptDriverTask,
-  DEFAULT_DRIVER_STATS,
-  getDriverHistories,
+  confirmPaymentByDriver,
   getDriverTasks,
   getDriverTaskWsUrl,
   markAssignmentDelivered,
@@ -32,47 +34,24 @@ import { getDriverActiveTaskLabel } from "@/utils/common";
 import { toToastMessage } from "@/utils/toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Bell, LogOut, User, Wallet } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useMemo, useState } from "react";
 import useWebSocket from "react-use-websocket";
 
-const getTaskCompletionAction = (task: DriverTask) => {
-  const status = (task.status || "").toUpperCase();
-
-  if (status === "PICKED_UP") {
-    return { label: "Mark as Delivered", nextAction: "delivered" as const };
-  }
-  if (status === "DELIVERED_TO_SHOP" || status === "DELIVERED") {
-    return { label: "Completed", nextAction: null };
-  }
-  return { label: "Mark as Picked Up", nextAction: "picked-up" as const };
-};
-
-const mockDriverTask: DriverTaskRequest = {
-  id: "task-001",
-  orderId: "order-123",
-  orderStatus: "PENDING",
-  customerName: "John Doe",
-  type: "DELIVERY", // adjust based on your enum
-  address: "123 Street, Phnom Penh",
-  shopName: "Clean Laundry Shop",
-  distance: "2.5 km",
-  status: "ACCEPTED", // adjust enum
-  payout: 5.5,
-  lat: 11.5564,
-  lng: 104.9282,
-  business: null,
-  order: null,
-};
 export default function DriverTasksPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DriverTaskTab>("tasks");
   const queryClient = useQueryClient();
   const [newRequest, setNewRequest] = useState<DriverTaskRequest | null>();
   const [activeTasks, setActiveTasks] = useState<DriverTask[]>([]);
-  const [historyTasks, setHistoryTasks] = useState<DriverTask[]>([]);
   const [taskDetail, setTaskDetail] = useState<DriverTaskRequest | null>();
+  const [paymentTask, setPaymentTask] = useState<DriverTask | null>(null);
+  const [shopCollectTask, setShopCollectTask] = useState<DriverTask | null>(
+    null,
+  );
+  const [customerCollectTask, setCustomerCollectTask] =
+    useState<DriverTask | null>(null);
   const [remainingTime, setRemainingTime] = useState(0);
   const toastCtx = useContext(ToastContext);
   const { value: authUser, setValue: setAuthUser } =
@@ -88,10 +67,6 @@ export default function DriverTasksPage() {
     [authUser?.driver?.id],
   );
 
-  const driverHistoryTasksQueryKey = useMemo(
-    () => ["driver-history-tasks", authUser?.driver?.id] as const,
-    [authUser?.driver?.id],
-  );
   const { mutate } = useMutation({
     mutationFn: async (taskId: string) => {
       await acceptDriverTask(taskId);
@@ -130,12 +105,22 @@ export default function DriverTasksPage() {
       mutationFn: async ({
         assignmentId,
         action,
+        deliveryFeePaidBy,
+        paymentId,
       }: {
         assignmentId: string;
         action: "picked-up" | "delivered";
+        deliveryFeePaidBy?: "CUSTOMER" | "SHOP";
+        paymentId?: string | null;
       }) => {
         if (action === "picked-up") {
-          return markAssignmentPickedUp(assignmentId);
+          return markAssignmentPickedUp(
+            assignmentId,
+            deliveryFeePaidBy ?? "CUSTOMER",
+          );
+        }
+        if (paymentId) {
+          await confirmPaymentByDriver(paymentId);
         }
         return markAssignmentDelivered(assignmentId);
       },
@@ -148,6 +133,7 @@ export default function DriverTasksPage() {
           queryKey: driverTasksQueryKey,
           type: "active",
         });
+        setPaymentTask(null);
         toastCtx.setToast?.({
           error: false,
           message: "Task updated successfully.",
@@ -171,11 +157,6 @@ export default function DriverTasksPage() {
   const { data: driverTasks } = useQuery({
     queryKey: driverTasksQueryKey,
     queryFn: () => getDriverTasks(authUser?.driver?.id || ""),
-  });
-
-  const { data: driverTaskHistories } = useQuery({
-    queryKey: driverHistoryTasksQueryKey,
-    queryFn: () => getDriverHistories(authUser?.driver?.id || ""),
   });
 
   //Query active package for driver in case of web socket is not available
@@ -206,18 +187,11 @@ export default function DriverTasksPage() {
     );
   }, [driverTasks]);
 
-  useEffect(() => {
-    console.log("driver history tasks are ", driverTaskHistories);
-    setHistoryTasks(
-      driverTaskHistories?.items?.map((task: DriverAssignmentResponse) =>
-        convertAssignmentToDriverTask(task),
-      ) || [],
-    );
-  }, [driverTaskHistories]);
-
-  console.log("driver history", driverTaskHistories);
   // console.log("driver profile ---->", driverTasks);
 
+  //
+  // WEB SOCKET
+  //
   useWebSocket(wsUrl, {
     shouldReconnect: () => true,
     heartbeat: {
@@ -277,10 +251,67 @@ export default function DriverTasksPage() {
       return;
     }
 
+    if (action.nextAction === "picked-up") {
+      if (task.type === "DELIVERY") {
+        mutateCompleteTask({ assignmentId: task.id, action: "picked-up" });
+      } else {
+        setPaymentTask(task);
+      }
+      return;
+    }
+    console.log("handleCompleteTask before deliver condition is starting ");
+    if (action.nextAction === "delivered") {
+      if (task.type === "DELIVERY") {
+        setCustomerCollectTask(task);
+        return;
+      }
+      // PICKUP — delivering to shop
+      if (task.deliveryFeePaidBy === "SHOP") {
+        setShopCollectTask(task);
+      } else {
+        mutateCompleteTask({
+          assignmentId: task.id,
+          action: "delivered",
+          paymentId: task.order?.payment_id,
+        });
+      }
+    }
+  };
+
+  const handleConfirmPayment = (deliveryFeePaidBy: "CUSTOMER" | "SHOP") => {
+    if (!paymentTask?.id) return;
+    const { nextAction } = getDriverActiveTaskLabel(paymentTask.orderStatus);
+    if (!nextAction) return;
+    mutateCompleteTask(
+      { assignmentId: paymentTask.id, action: nextAction, deliveryFeePaidBy },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({
+            queryKey: driverTasksQueryKey,
+          });
+        },
+      },
+    );
+  };
+
+  const handleConfirmCustomerCollect = () => {
+    if (!customerCollectTask?.id) return;
     mutateCompleteTask({
-      assignmentId: task.id,
-      action: action.nextAction,
+      assignmentId: customerCollectTask.id,
+      action: "delivered",
+      paymentId: customerCollectTask.order?.payment_id,
     });
+    setCustomerCollectTask(null);
+  };
+
+  const handleConfirmShopCollect = () => {
+    if (!shopCollectTask?.id) return;
+    mutateCompleteTask({
+      assignmentId: shopCollectTask.id,
+      action: "delivered",
+      paymentId: shopCollectTask.order?.payment_id,
+    });
+    setShopCollectTask(null);
   };
 
   const handleLogout = async () => {
@@ -347,13 +378,14 @@ export default function DriverTasksPage() {
       <main className="max-w-2xl mx-auto p-6">
         {activeTab === "tasks" && !taskDetail && (
           <div className="space-y-8 animate-in fade-in duration-500">
-            {newRequest && (
+            {newRequest && activeTasks.length === 0 && (
               <DriverTaskRequestCard
                 request={newRequest}
                 onAccept={handleAcceptRequest}
                 onReject={() => setNewRequest(null)}
                 timeout={remainingTime}
                 onClose={() => setNewRequest(null)}
+                type={newRequest?.role || ""}
               />
             )}
 
@@ -391,76 +423,11 @@ export default function DriverTasksPage() {
         )}
 
         {activeTab === "history" && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2.5rem] p-8 border border-white/5">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                    Available Balance
-                  </p>
-                  <h2 className="text-4xl font-black text-white mt-1">
-                    ${DEFAULT_DRIVER_STATS.availableBalance.toFixed(2)}
-                  </h2>
-                </div>
-                <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center text-green-400">
-                  <Wallet size={24} />
-                </div>
-              </div>
-              <button
-                type="button"
-                className="w-full mt-8 py-4 bg-white text-slate-900 font-black rounded-2xl shadow-lg"
-              >
-                Withdraw Funds
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <DriverStatCard
-                label="Deliveries"
-                value={String(DEFAULT_DRIVER_STATS.deliveries)}
-                sub={DEFAULT_DRIVER_STATS.deliveriesDelta}
-              />
-              <DriverStatCard
-                label="Rating"
-                value={String(DEFAULT_DRIVER_STATS.rating)}
-                sub={DEFAULT_DRIVER_STATS.ratingNote}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 flex justify-between">
-                Histories <span>{activeTasks?.length}</span>
-              </h4>
-
-              {historyTasks?.length > 0 ? (
-                historyTasks.map((task) =>
-                  (() => {
-                    const action = getTaskCompletionAction(task);
-                    return (
-                      <DriverHistoryTaskCard
-                        key={task.id}
-                        task={task}
-                        // onComplete={handleCompleteTask}
-                        // isCompleting={isCompletingTask}
-                        // completeLabel={action.label}
-                        // completeDisabled={!action.nextAction}
-                      />
-                    );
-                  })(),
-                )
-              ) : (
-                <p className="text-slate-500 text-center py-4">
-                  No active missions.
-                </p>
-              )}
-            </div>
-          </div>
+          <DriverHistoryTab driverId={authUser?.driver?.id ?? ""} />
         )}
 
         {activeTab === "profile" && (
-          <div className="rounded-[2rem] border border-white/10 bg-slate-900 p-6 text-center text-slate-300">
-            Profile settings will be available soon.
-          </div>
+          <DriverProfileTab authUser={authUser} onLogout={handleLogout} />
         )}
       </main>
 
@@ -474,6 +441,46 @@ export default function DriverTasksPage() {
           data={taskDetail}
         />
       )}
+      <PaymentAcceptanceModal
+        key={`payment-${Boolean(paymentTask)}-${paymentTask?.id ?? "none"}`}
+        open={Boolean(paymentTask)}
+        onClose={() => setPaymentTask(null)}
+        onConfirm={handleConfirmPayment}
+        isSubmitting={isCompletingTask}
+        orderNo={paymentTask?.order?.order_no}
+        deliveryFee={
+          paymentTask?.type == "PICKUP"
+            ? paymentTask?.order?.pickup_fee
+            : (paymentTask?.order?.delivery_fee ?? null)
+        }
+      />
+      <CollectFromShopModal
+        key={`shop-collect-${Boolean(shopCollectTask)}-${shopCollectTask?.id ?? "none"}`}
+        open={Boolean(shopCollectTask)}
+        onClose={() => setShopCollectTask(null)}
+        onConfirm={handleConfirmShopCollect}
+        isSubmitting={isCompletingTask}
+        orderNo={shopCollectTask?.order?.order_no}
+        deliveryFee={
+          shopCollectTask?.type == "PICKUP"
+            ? shopCollectTask?.order?.pickup_fee
+            : (shopCollectTask?.order?.delivery_fee ?? null)
+        }
+      />
+      <CollectFromCustomerModal
+        key={`customer-collect-${Boolean(customerCollectTask)}-${customerCollectTask?.id ?? "none"}`}
+        open={Boolean(customerCollectTask)}
+        onClose={() => setCustomerCollectTask(null)}
+        onConfirm={handleConfirmCustomerCollect}
+        isSubmitting={isCompletingTask}
+        orderNo={customerCollectTask?.order?.order_no}
+        orderTotal={customerCollectTask?.order?.subtotal ?? null}
+        deliveryFee={customerCollectTask?.order?.delivery_fee ?? null}
+        pickupFee={customerCollectTask?.order?.pickup_fee ?? null}
+        hasAdvanceSettlement={
+          customerCollectTask?.order?.has_advance_settlement ?? null
+        }
+      />
     </div>
   );
 }

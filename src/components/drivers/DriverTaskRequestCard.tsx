@@ -7,6 +7,7 @@ interface DriverTaskRequestCardProps {
   onReject: () => void;
   timeout?: number;
   onClose: () => void;
+  type: string;
 }
 
 export default function DriverTaskRequestCard({
@@ -15,6 +16,7 @@ export default function DriverTaskRequestCard({
   onReject,
   timeout,
   onClose,
+  type,
 }: DriverTaskRequestCardProps) {
   const [timer, setTimer] = useState(timeout || 0);
 
@@ -78,7 +80,13 @@ export default function DriverTaskRequestCard({
           onClick={() => onAccept(request)}
           className="px-8 py-4 bg-white text-blue-700 font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
         >
-          <BadgeDollarSign size={16} /> Accept +${request.payout.toFixed(2)}
+          <BadgeDollarSign size={16} />
+          Accept +${request.type === "PICKUP"
+            ? (request.pickupFee ?? 0).toFixed(2)
+            : (request.deliveryFee && request.deliveryFee > 0
+                ? request.deliveryFee
+                : (request.pickupFee ?? 0)
+              ).toFixed(2)}
         </button>
       </div>
     </div>

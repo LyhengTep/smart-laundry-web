@@ -300,6 +300,22 @@ export function OrderDetailDrawer({
                 {formatAmount(order.discount)}
               </span>
             </div>
+            {order.pickupFee != null && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Pickup Fee</span>
+                <span className="font-semibold text-slate-800">
+                  {formatAmount(order.pickupFee)}
+                </span>
+              </div>
+            )}
+            {order.deliveryFee != null && order.deliveryFee > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Delivery Fee</span>
+                <span className="font-semibold text-slate-800">
+                  {formatAmount(order.deliveryFee)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-base border-t border-slate-200 pt-2 mt-2">
               <span className="font-bold text-slate-900">Total</span>
               <span className="font-bold text-blue-700">

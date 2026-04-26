@@ -1,7 +1,7 @@
 "use client";
 
-import { OrderSectionTabs } from "@/components/orders/OrderSectionTabs";
 import { OrderDetailDrawer } from "@/components/orders/OrderDetailDrawer";
+import { OrderSectionTabs } from "@/components/orders/OrderSectionTabs";
 import { OrdersStatsBar } from "@/components/orders/OrdersStatsBar";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 import { PendingOrdersRibbon } from "@/components/orders/PendingOrdersRibbon";
@@ -26,7 +26,7 @@ const toOrderCard = (order: LaundryOrder): OrderItem => {
     customer: order.customer_id,
     service: firstItem?.service_name || `${order.items?.length || 0} services`,
     weight: `${quantity} ${measure}`,
-    price: `$${order.total.toFixed(2)}`,
+    price: `$${order.subtotal.toFixed(2)}`,
     status: order.status,
     pickupAt: order.scheduled_pickup_at
       ? new Date(order.scheduled_pickup_at).toLocaleString()
@@ -40,6 +40,8 @@ const toOrderCard = (order: LaundryOrder): OrderItem => {
     subtotal: order.subtotal,
     discount: order.discount,
     total: order.total,
+    pickupFee: order.pickup_fee ?? null,
+    deliveryFee: order.delivery_fee ?? null,
     lineItems: (order.items || []).map((item) => ({
       id: item.id,
       serviceName: item.service_name,
@@ -69,7 +71,33 @@ const toPendingCard = (order: LaundryOrder) => {
     id: order.id,
     title: `Order ${order.order_no}`,
     subtitle: `Customer #${customerShort} • ${serviceText}`,
-    meta: `Total $${order.total.toFixed(2)} • Pickup ${pickupTime}`,
+    meta: `Subtotal $${order.subtotal.toFixed(2)} • Pickup ${pickupTime}`,
+    customer: order.customer_id,
+    pickupAddress: order.pickup_address || "",
+    deliveryAddress: order.delivery_address || "",
+    pickupLat: order.pickup_latitude ?? null,
+    pickupLng: order.pickup_longitude ?? null,
+    deliveryLat: order.delivery_latitude ?? null,
+    deliveryLng: order.delivery_longitude ?? null,
+    scheduledPickupAt: order.scheduled_pickup_at
+      ? new Date(order.scheduled_pickup_at).toLocaleString()
+      : undefined,
+    scheduledDropoffAt: order.scheduled_dropoff_at
+      ? new Date(order.scheduled_dropoff_at).toLocaleString()
+      : undefined,
+    notes: order.notes || "",
+    total: order.total,
+    pickupFee: order.pickup_fee ?? null,
+    lineItems: (order.items || []).map((item) => ({
+      id: item.id,
+      serviceName: item.service_name,
+      pricingType: item.pricing_type,
+      measureType: item.measure_type,
+      unitPrice: item.unit_price,
+      quantity: item.quantity,
+      subTotal: item.sub_total,
+      note: item.note,
+    })),
   };
 };
 
@@ -83,6 +111,7 @@ const LIVE_STATUS_OPTIONS = [
   "PROCESSING",
   "READY_FOR_DELIVERY",
   "DELIVERY_ASSIGNED",
+  "PICKED_UP_DELIVERY",
   "OUT_FOR_DELIVERY",
 ];
 
@@ -102,7 +131,6 @@ export default function OrderManagementPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm.trim());
@@ -138,12 +166,23 @@ export default function OrderManagementPage() {
   );
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
-      updateOrderStatus(orderId, { status }),
-    onSuccess: async () => {
+    mutationFn: ({
+      orderId,
+      status,
+      pickup_fee,
+    }: {
+      orderId: string;
+      status: string;
+      pickup_fee?: number | null;
+    }) => updateOrderStatus(orderId, { status, pickup_fee }),
+    onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
         queryKey: ["orders"],
         refetchType: "active",
+      });
+      setSelectedOrder((prev) => {
+        if (!prev || prev.orderId !== variables.orderId) return prev;
+        return { ...prev, status: variables.status };
       });
       toastCtx?.setToast?.({
         error: false,
@@ -177,7 +216,10 @@ export default function OrderManagementPage() {
         if (!prev || prev.orderId !== variables.orderId) return prev;
 
         const quantityMap = new Map(
-          variables.payload.items.map((item) => [item.order_item_id, item.quantity]),
+          variables.payload.items.map((item) => [
+            item.order_item_id,
+            item.quantity,
+          ]),
         );
         const updatedLineItems = (prev.lineItems || []).map((item) => {
           const nextQuantity = quantityMap.get(item.id);
@@ -222,15 +264,12 @@ export default function OrderManagementPage() {
     },
   });
 
-  const handleAcceptOrder = (id: string) => {
-    dialogCtx.open({
-      title: "Accept this order?",
-      description: "This will move this order to CONFIRMED.",
-      confirmLabel: "Yes, Accept",
-      onConfirm: () => {
-        setHiddenPendingOrderIds((prev) => [...prev, id]);
-        updateStatusMutation.mutate({ orderId: id, status: "CONFIRMED" });
-      },
+  const handleAcceptOrder = (id: string, pickupFee: number) => {
+    setHiddenPendingOrderIds((prev) => [...prev, id]);
+    updateStatusMutation.mutate({
+      orderId: id,
+      status: "CONFIRMED",
+      pickup_fee: pickupFee,
     });
   };
 
@@ -267,7 +306,8 @@ export default function OrderManagementPage() {
   ) => {
     dialogCtx.open({
       title: "Recalculate order pricing?",
-      description: "Measured quantity and discount will update this order total.",
+      description:
+        "Measured quantity and discount will update this order total.",
       confirmLabel: "Yes, Recalculate",
       onConfirm: () => {
         updatePricingMutation.mutate({
@@ -320,12 +360,13 @@ export default function OrderManagementPage() {
   }
 
   return (
-    <div className="flex-1 min-h-screen bg-slate-50/50 p-4 md:p-8 space-y-8">
+    <div className="flex-1 min-h-screen bg-slate-50/50 p-3 md:p-8 space-y-4 md:space-y-8">
       {activeSection === "orders" && (
         <PendingOrdersRibbon
           pendingOrders={pendingOrders}
           onAccept={handleAcceptOrder}
           onReject={handleRejectOrder}
+
           // processingOrderId={
           //   updateStatusMutation.isPending
           //     ? updateStatusMutation.variables?.orderId || null
@@ -348,6 +389,7 @@ export default function OrderManagementPage() {
               "PROCESSING",
               "READY_FOR_DELIVERY",
               "DELIVERY_ASSIGNED",
+              "PICKED_UP_DELIVERY",
               "OUT_FOR_DELIVERY",
             ].includes(o.status),
           ).length

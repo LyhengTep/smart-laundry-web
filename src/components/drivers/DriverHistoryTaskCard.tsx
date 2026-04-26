@@ -7,22 +7,15 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
-  Clock,
-  MapPin,
 } from "lucide-react";
 
 export default function DriverHistoryTaskCard({ task }: { task: DriverTask }) {
-  const historyItem = {
-    id: "ORD-77291",
-    customer: "Sophia Loren",
-    type: "DROPOFF",
-    payout: 8.4,
-    tips: 2.0,
-    distance: "4.2 km",
-    duration: "14 mins",
-    date: "Oct 24, 2026 • 02:15 PM",
-    shop: "Bubbles & Suds Premium",
-  };
+  const payout =
+    task.type === "PICKUP"
+      ? (task.order?.pickup_fee ?? 0)
+      : task.order?.delivery_fee && task.order.delivery_fee > 0
+        ? task.order.delivery_fee
+        : (task.order?.pickup_fee ?? 0);
 
   return (
     <div className="group relative overflow-hidden bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-1 transition-all hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10">
@@ -36,7 +29,7 @@ export default function DriverHistoryTaskCard({ task }: { task: DriverTask }) {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
-                {task.status}
+                {task.type} · {task.status}
               </p>
               <h4 className="text-sm font-bold text-slate-300 mt-1">
                 {task?.order?.order_no}
@@ -49,7 +42,7 @@ export default function DriverHistoryTaskCard({ task }: { task: DriverTask }) {
             </p>
             <div className="flex items-center gap-1 justify-end">
               <span className="text-xl font-black text-white">
-                ${(historyItem.payout + historyItem.tips).toFixed(2)}
+                ${payout.toFixed(2)}
               </span>
               <ArrowUpRight size={14} className="text-green-400" />
             </div>
@@ -63,7 +56,7 @@ export default function DriverHistoryTaskCard({ task }: { task: DriverTask }) {
               Customer
             </p>
             <p className="text-sm font-bold text-white truncate">
-              {task?.order?.customer?.full_name}
+              {task?.order?.customer?.full_name ?? "—"}
             </p>
           </div>
           <div className="space-y-1">
@@ -71,28 +64,13 @@ export default function DriverHistoryTaskCard({ task }: { task: DriverTask }) {
               Service Shop
             </p>
             <p className="text-sm font-bold text-blue-400 truncate">
-              {task?.business?.name}
+              {task?.business?.name ?? "—"}
             </p>
           </div>
         </div>
 
-        {/* Bottom Section: Stats & Date */}
-        <div className="mt-6 flex items-center justify-between">
-          <div className="flex gap-4">
-            <div className="flex items-center gap-1.5">
-              <Clock size={12} className="text-slate-500" />
-              <span className="text-[11px] font-bold text-slate-400">
-                {historyItem.duration}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <MapPin size={12} className="text-slate-500" />
-              <span className="text-[11px] font-bold text-slate-400">
-                {historyItem.distance}
-              </span>
-            </div>
-          </div>
-
+        {/* Bottom Section: Date */}
+        <div className="mt-6 flex items-center justify-end">
           <div className="flex items-center gap-2 text-slate-500">
             <Calendar size={12} />
             <span className="text-[11px] font-bold">

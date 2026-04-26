@@ -48,23 +48,63 @@ export default function DriverActiveTaskCard({
           </div>
         </div>
         <div className="flex gap-2">
-          <button
-            type="button"
-            className="p-3 bg-slate-800 rounded-xl text-slate-400 hover:text-white"
+          <a
+            href={`tel:${task.type === "DELIVERY" ? task.order?.customer?.phone : task.business?.phone}`}
+            onClick={(e) => e.stopPropagation()}
+            className="p-3 bg-slate-800 rounded-xl text-green-400 hover:text-white hover:bg-green-600 transition-all"
             aria-label={`Call ${task.customerName}`}
           >
             <Phone size={16} />
-          </button>
-          <button
-            type="button"
-            className="p-3 bg-slate-800 rounded-xl text-slate-400 hover:text-white"
-            aria-label={`Message ${task.customerName}`}
-          >
-            <MessageSquare size={16} />
-          </button>
+          </a>
+          <div className="relative group/chat">
+            <button
+              type="button"
+              disabled
+              className="p-3 bg-slate-800/50 rounded-xl text-slate-600 cursor-not-allowed"
+              aria-label="Chat — coming soon"
+            >
+              <MessageSquare size={16} />
+            </button>
+            <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-700 text-slate-300 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full opacity-0 group-hover/chat:opacity-100 transition-opacity pointer-events-none">
+              Coming Soon
+            </span>
+          </div>
         </div>
       </div>
       <p className="text-slate-300 text-sm mb-4">{task.address}</p>
+
+      <div className="bg-slate-800/50 rounded-2xl px-4 py-3 mb-4 flex flex-wrap gap-x-5 gap-y-2">
+        {task.type === "PICKUP" ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pickup Fee</span>
+            <span className="text-sm font-black text-white">${(task.pickupFee ?? 0).toFixed(2)}</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Service Fee</span>
+              <span className="text-sm font-black text-white">${(task.order?.subtotal ?? 0).toFixed(2)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Delivery Fee</span>
+              <span className="text-sm font-black text-white">
+                ${(task.order?.delivery_fee && task.order.delivery_fee > 0
+                  ? task.order.delivery_fee
+                  : (task.order?.pickup_fee ?? 0)
+                ).toFixed(2)}
+              </span>
+            </div>
+            {task.order?.has_advance_settlement && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pickup Fee</span>
+                <span className="text-sm font-black text-amber-400">${(task.order?.pickup_fee ?? 0).toFixed(2)}</span>
+                <span className="text-[9px] font-black uppercase tracking-widest bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">Advance</span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <a
           href={canOpenMap ? getMapDirection(task) : "#"}

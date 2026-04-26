@@ -11,6 +11,7 @@ export type OrderStatus =
   | "PROCESSING"
   | "READY_FOR_DELIVERY"
   | "DELIVERY_ASSIGNED"
+  | "PICKED_UP_DELIVERY"
   | "OUT_FOR_DELIVERY"
   | "DELIVERED"
   | "CANCELLED"
@@ -49,7 +50,12 @@ export interface LaundryOrder {
   notes?: string | null;
   subtotal: number;
   discount: number;
+  delivery_fee?: number | null;
+  delivery_fee_paid_by?: "CUSTOMER" | "SHOP" | null;
+  pickup_fee?: number | null;
+  has_advance_settlement?: boolean | null;
   total: number;
+  payment_id?: string | null;
   created_at: string;
   updated_at: string;
   items: LaundryOrderLine[];
@@ -77,6 +83,7 @@ export interface OrderQueryParams {
 export interface UpdateOrderStatusRequest {
   status: OrderStatus;
   driver_id?: string | null;
+  pickup_fee?: number | null;
 }
 
 export interface UpdateOrderPricingItem {

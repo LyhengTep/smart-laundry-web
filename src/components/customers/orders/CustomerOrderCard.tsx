@@ -47,7 +47,7 @@ const formatTime = (value?: string | null) => {
 const isPendingPrice = (order: LaundryOrder) => {
   return (
     order.status === "PENDING" ||
-    (typeof order.total === "number" && order.total === 0)
+    (typeof order.subtotal === "number" && order.subtotal === 0)
   );
 };
 
@@ -133,7 +133,7 @@ export default function CustomerOrderCard({
               <p
                 className={`text-xl font-black ${pendingPrice ? "text-slate-300 italic text-sm" : "text-slate-900"}`}
               >
-                {pendingPrice ? "Pending weight..." : formatMoney(order.total)}
+                {pendingPrice ? "Pending weight..." : formatMoney(order.subtotal)}
               </p>
             </div>
           </div>

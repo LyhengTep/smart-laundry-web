@@ -26,6 +26,13 @@ export const convertAssignmentToDriverTask = (
       : assignment.order?.delivery_longitude || null,
     business: assignment.order?.business || null,
     order: assignment?.order || null,
+    deliveryFeePaidBy: assignment.order?.delivery_fee_paid_by ?? null,
+    cost: assignment.cost,
+    role: assignment.role,
+    deliveryFee: assignment?.order?.delivery_fee || 0,
+    total: assignment?.order?.total || 0,
+    subtotal: assignment?.order?.subtotal || 0,
+    pickupFee: assignment?.order?.pickup_fee || 0,
   };
 
   return task;
