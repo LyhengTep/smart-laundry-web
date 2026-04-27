@@ -1,7 +1,7 @@
 "use client";
 
 import { Business } from "@/types/business";
-import { ArrowRight, MapPin, Store, Trash2 } from "lucide-react";
+import { ArrowRight, MapPin, Star, Store, Trash2 } from "lucide-react";
 
 interface BusinessShopCardProps {
   shop: Business;
@@ -77,17 +77,23 @@ export const BusinessShopCard = ({
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-          <div className="text-sm">
-            <span
-              className={
-                isPending
-                  ? "font-bold text-slate-500"
-                  : "font-bold text-blue-600"
-              }
-            >
-              {normalizedStatus || "UNKNOWN"}
-            </span>
-            <span className="text-slate-500 ml-1">Status</span>
+          <div className="flex items-center gap-1.5">
+            <Star
+              size={15}
+              className="text-yellow-400"
+              fill="currentColor"
+            />
+            {shop.review_summary && shop.review_summary.total_reviews > 0 ? (
+              <span className="text-sm font-bold text-slate-700">
+                {shop.review_summary.average_rating.toFixed(1)}
+                <span className="ml-1 text-slate-400 font-normal">
+                  ({shop.review_summary.total_reviews}{" "}
+                  {shop.review_summary.total_reviews === 1 ? "review" : "reviews"})
+                </span>
+              </span>
+            ) : (
+              <span className="text-sm text-slate-400">No reviews yet</span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {onRemove && (
