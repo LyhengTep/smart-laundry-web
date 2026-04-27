@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   Check,
   ChevronLeft,
+  Clock,
+  Info,
   LayoutDashboard,
   Loader2,
   Menu,
@@ -39,8 +41,22 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
 
   const shopName = business?.name ?? "{shopName}";
   const shopStatus = business?.status;
-  const isOpen = shopStatus === "OPEN";
+  const isOpen = shopStatus === "OPEN" || shopStatus === "APPROVED";
   const canToggle = shopStatus === "OPEN" || shopStatus === "CLOSED" || shopStatus === "APPROVED";
+
+  const isOutsideBusinessHours = (() => {
+    if (!business?.open_time || !business?.close_time) return false;
+    const toMins = (t: string) => {
+      const d = new Date(`1970-01-01T${t}`);
+      return isNaN(d.getTime()) ? null : d.getUTCHours() * 60 + d.getUTCMinutes();
+    };
+    const open = toMins(business.open_time);
+    const close = toMins(business.close_time);
+    if (open === null || close === null || open === close) return false;
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    return close > open ? cur < open || cur >= close : cur >= close && cur < open;
+  })();
 
   const [statusError, setStatusError] = useState<string | null>(null);
   const [pendingWarning, setPendingWarning] = useState<ShopStatusResponse | null>(null);
@@ -290,6 +306,25 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
                   </span>
                 </div>
               </div>
+
+              {/* Outside business hours info */}
+              {isOpen && isOutsideBusinessHours && business && (
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 flex items-start gap-3">
+                  <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-700">
+                    <p className="font-semibold flex items-center gap-1.5">
+                      <Clock size={13} /> Outside business hours
+                    </p>
+                    <p className="mt-1 leading-relaxed">
+                      Your shop hours are{" "}
+                      <span className="font-bold">
+                        {business.open_time?.slice(0, 5)}–{business.close_time?.slice(0, 5)}
+                      </span>
+                      . Opening outside these hours has no effect until customers can discover you.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Warning — active orders */}
               {pendingWarning && (
