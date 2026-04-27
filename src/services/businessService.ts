@@ -20,11 +20,19 @@ export const getBusinesses = async (
 ): Promise<BusinessListResponse> => {
   const res = await http.get<BusinessListResponse>(
     API_ROUTES.FETCH_BUSINESSES,
-    {
-      params,
-    },
+    { params },
   );
+  return res.data;
+};
 
+export const getMyBusinesses = async (params?: {
+  page?: number;
+  size?: number;
+}): Promise<BusinessListResponse> => {
+  const res = await http.get<BusinessListResponse>(
+    API_ROUTES.FETCH_MY_BUSINESSES,
+    { params },
+  );
   return res.data;
 };
 

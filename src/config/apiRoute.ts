@@ -3,6 +3,7 @@ export const API_ROUTES = {
   LOGIN: "/auths/login",
   LOGOUT: "/auths/logout",
   FETCH_BUSINESSES: "/businesses/",
+  FETCH_MY_BUSINESSES: "/businesses/mine",
   GET_BUSINESS: (id: string) => `/businesses/${id}`,
   UPDATE_BUSINESS: (id: string) => `/businesses/${id}`,
   FETCH_LAUNDRY_SERVICES: "/laundry-services/",

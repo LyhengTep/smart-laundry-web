@@ -1,89 +1,67 @@
 "use client";
 
 import { BusinessShopCard } from "@/components/BusinessShopCard";
+import { ListingPagination } from "@/components/ListingPagination";
 import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
-import { useBusinesses } from "@/hooks/businesses/businessHook";
-import { deleteBusiness } from "@/services/businessService";
+import { deleteBusiness, getMyBusinesses } from "@/services/businessService";
 import { Business } from "@/types/business";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Store } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
+
+const PAGE_SIZE = 9;
+
 const MultiShopManager = () => {
-  const [view, setView] = useState("selector"); // 'selector' or 'dashboard'
-  const [selectedShop, setSelectedShop] = useState<Partial<Business>>({});
+  const [page, setPage] = useState(1);
   const router = useRouter();
   const queryClient = useQueryClient();
   const toastCtx = useContext(ToastContext);
   const dialogCtx = useContext(DialogCtx);
 
-  // Mock Data: Your Portfolio of Shops
-  const myShops = [
-    {
-      id: 1,
-      name: "Bubbles & Suds",
-      location: "North Campus",
-      status: "Open",
-      orders: 12,
-    },
-    {
-      id: 2,
-      name: "Prime Press",
-      location: "Downtown",
-      status: "Closed",
-      orders: 0,
-    },
-  ];
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["my-businesses", page],
+    queryFn: () => getMyBusinesses({ page, size: PAGE_SIZE }),
+  });
 
-  const handleSelectShop = (shop: Business) => {
-    setSelectedShop(shop);
-    router.push(`/businesses-admin/${shop.id}/view`);
-    // setView("dashboard");
-  };
-
-  const { data, isLoading, error } = useBusinesses();
   const removeBusinessMutation = useMutation({
     mutationFn: (id: string) => deleteBusiness(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["businesses"],
+        queryKey: ["my-businesses"],
         refetchType: "active",
       });
-      toastCtx?.setToast?.({
-        error: false,
-        message: "Shop removed successfully.",
-      });
+      toastCtx?.setToast?.({ error: false, message: "Shop removed successfully." });
       toastCtx?.setIsVisible(true);
     },
     onError: () => {
-      toastCtx?.setToast?.({
-        error: true,
-        message: "Failed to remove shop.",
-      });
+      toastCtx?.setToast?.({ error: true, message: "Failed to remove shop." });
       toastCtx?.setIsVisible(true);
     },
   });
+
+  const handleSelectShop = (shop: Business) => {
+    router.push(`/businesses-admin/${shop.id}/view`);
+  };
 
   const handleRemoveShop = (shop: Business) => {
     dialogCtx.open({
       title: "Remove this shop?",
       description: (
         <>
-          This will remove <strong>{shop.name}</strong>. This action cannot be
-          undone.
+          This will remove <strong>{shop.name}</strong>. This action cannot be undone.
         </>
       ),
       confirmLabel: "Yes, Remove",
       tone: "danger",
-      onConfirm: () => {
-        removeBusinessMutation.mutate(shop.id);
-      },
+      onConfirm: () => removeBusinessMutation.mutate(shop.id),
     });
   };
 
-  console.log("Fetched Businesses:", data);
+  const shops = data?.items ?? [];
+  const totalPages = data?.pages ?? 0;
 
   return (
     <div className="min-h-screen bg-slate-50 p-8">
@@ -94,7 +72,9 @@ const MultiShopManager = () => {
               Your <span className="text-blue-600">Shops</span>
             </h1>
             <p className="text-slate-500 mt-2 text-lg">
-              Select a business to manage or create a new location.
+              {isLoading
+                ? "Loading your businesses..."
+                : `${data?.total ?? 0} shop(s) in your portfolio`}
             </p>
           </div>
           <Link
@@ -105,40 +85,78 @@ const MultiShopManager = () => {
           </Link>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data?.items?.map((shop) => (
-            <BusinessShopCard
-              key={shop.id}
-              shop={shop}
-              onSelect={handleSelectShop}
-              onRemove={handleRemoveShop}
-              removing={
-                removeBusinessMutation.isPending &&
-                removeBusinessMutation.variables === shop.id
-              }
-            />
-          ))}
+        {isError && (
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-red-700 mb-6">
+            Failed to load your businesses. Please try again.
+          </div>
+        )}
 
-          {/* Empty State / Create Placeholder */}
-          <Link
-            href="/businesses/new"
-            className="border-2 border-dashed border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-blue-300 hover:text-blue-500 transition-all cursor-pointer"
-          >
-            <Plus size={40} className="mb-2" />
-            <p className="font-semibold">Expand Business</p>
-          </Link>
+        {/* Shop grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-3xl border border-slate-200 bg-white p-6 h-52 animate-pulse"
+                />
+              ))
+            : shops.map((shop) => (
+                <BusinessShopCard
+                  key={shop.id}
+                  shop={shop}
+                  onSelect={handleSelectShop}
+                  onRemove={handleRemoveShop}
+                  removing={
+                    removeBusinessMutation.isPending &&
+                    removeBusinessMutation.variables === shop.id
+                  }
+                />
+              ))}
+
+          {/* Add shop placeholder */}
+          {!isLoading && (
+            <Link
+              href="/businesses/new"
+              className="border-2 border-dashed border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-blue-300 hover:text-blue-500 transition-all cursor-pointer min-h-[200px]"
+            >
+              <Store size={32} className="mb-2" />
+              <Plus size={20} className="-mt-1" />
+              <p className="font-semibold mt-2">Expand Business</p>
+            </Link>
+          )}
         </div>
+
+        {/* Empty state */}
+        {!isLoading && !isError && shops.length === 0 && (
+          <div className="flex flex-col items-center gap-3 py-20 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
+              <Store size={28} className="text-slate-400" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-700">No shops yet</p>
+              <p className="text-sm text-slate-400 mt-0.5">
+                Add your first shop to get started.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <ListingPagination
+            currentPage={page}
+            pages={totalPages}
+            onForward={() => setPage((p) => Math.min(p + 1, totalPages))}
+            onBackward={() => setPage((p) => Math.max(p - 1, 1))}
+            onPageClick={(p) => {
+              const n = Number(p);
+              if (!isNaN(n)) setPage(n);
+            }}
+          />
+        )}
       </div>
     </div>
   );
 };
-
-// const SidebarIcon = ({ icon, active = false }) => (
-//   <button
-//     className={`p-3 rounded-2xl transition-all ${active ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "text-slate-500 hover:text-white hover:bg-white/10"}`}
-//   >
-//     {icon}
-//   </button>
-// );
 
 export default MultiShopManager;
