@@ -7,12 +7,14 @@ import { LaundryOrder } from "@/types/order";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
+  Check,
   CheckCircle2,
   Clock,
   Loader2,
   Plus,
   UserCheck,
   Wallet,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -70,12 +72,19 @@ function AcceptOrderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onCancel}
+      />
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Accept Order</p>
-            <h2 className="text-lg font-black text-gray-900 mt-0.5">{order.order_no}</h2>
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">
+              Accept Order
+            </p>
+            <h2 className="text-lg font-black text-gray-900 mt-0.5">
+              {order.order_no}
+            </h2>
           </div>
           <button
             type="button"
@@ -166,7 +175,9 @@ function QueueTableRow({
         <p className="text-sm text-gray-600">
           {topService}
           {extraCount > 0 && (
-            <span className="ml-1 text-xs text-gray-400">+{extraCount} more</span>
+            <span className="ml-1 text-xs text-gray-400">
+              +{extraCount} more
+            </span>
           )}
         </p>
       </td>
@@ -216,8 +227,12 @@ function QueueTableRow({
 const BusinessDashboard = () => {
   const params = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const [acceptingOrder, setAcceptingOrder] = useState<LaundryOrder | null>(null);
-  const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+  const [acceptingOrder, setAcceptingOrder] = useState<LaundryOrder | null>(
+    null,
+  );
+  const [processingOrderId, setProcessingOrderId] = useState<string | null>(
+    null,
+  );
 
   const { data: revenueData, isLoading: isRevenueLoading } = useQuery({
     queryKey: ["business-revenue", params.id],
@@ -246,8 +261,17 @@ const BusinessDashboard = () => {
   const currency = revenueData?.currency ?? "USD";
 
   const acceptMutation = useMutation({
-    mutationFn: ({ orderId, pickupFee }: { orderId: string; pickupFee: number }) =>
-      updateOrderStatus(orderId, { status: "CONFIRMED", pickup_fee: pickupFee }),
+    mutationFn: ({
+      orderId,
+      pickupFee,
+    }: {
+      orderId: string;
+      pickupFee: number;
+    }) =>
+      updateOrderStatus(orderId, {
+        status: "CONFIRMED",
+        pickup_fee: pickupFee,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       setAcceptingOrder(null);
@@ -304,8 +328,7 @@ const BusinessDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-slate-900">
-              Laundry Day,{" "}
-              <span className="text-blue-600">Managed.</span>
+              Laundry Day, <span className="text-blue-600">Managed.</span>
             </h2>
             <p className="text-gray-500 mt-1">
               Live queue — pending and ready for delivery orders.
@@ -363,13 +386,27 @@ const BusinessDashboard = () => {
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">Order</th>
-                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">Service</th>
-                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">Placed</th>
-                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider text-right">Action</th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                    Order
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                    Total
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                    Placed
+                  </th>
+                  <th className="px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider text-right">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -385,7 +422,10 @@ const BusinessDashboard = () => {
                   ))
                 ) : pendingOrders.length === 0 && readyOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-sm">
+                    <td
+                      colSpan={7}
+                      className="px-6 py-12 text-center text-gray-400 text-sm"
+                    >
                       No pending or ready-for-delivery orders.
                     </td>
                   </tr>
@@ -423,7 +463,6 @@ const BusinessDashboard = () => {
           isSubmitting={acceptMutation.isPending}
         />
       )}
-
     </main>
   );
 };
