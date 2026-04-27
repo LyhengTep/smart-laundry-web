@@ -4,6 +4,10 @@ import {
   BusinessListResponse,
   BusinessRequest,
   BusinessResponse,
+  BusinessReview,
+  BusinessReviewListResponse,
+  BusinessReviewRequest,
+  BusinessReviewSummary,
   BusinessServiceRequest,
   BusinessUpdateRequest,
   LaundryServiceResponse,
@@ -81,6 +85,43 @@ export const updateBusinessStatus = async (
   const res = await http.patch<BusinessResponse>(
     API_ROUTES.UPDATE_BUSINESS_STATUS(id),
     { status },
+  );
+  return res.data;
+};
+
+export const getBusinessReviewSummary = async (
+  businessId: string,
+): Promise<BusinessReviewSummary> => {
+  const res = await http.get<BusinessReviewSummary>(
+    API_ROUTES.GET_BUSINESS_REVIEW_SUMMARY(businessId),
+  );
+  return res.data;
+};
+
+export const getBusinessReviews = async (
+  businessId: string,
+): Promise<BusinessReviewListResponse> => {
+  const res = await http.get<BusinessReviewListResponse>(
+    API_ROUTES.GET_BUSINESS_REVIEWS(businessId),
+  );
+  return res.data;
+};
+
+export const createBusinessReview = async (
+  businessId: string,
+  data: BusinessReviewRequest,
+): Promise<void> => {
+  await http.post(API_ROUTES.CREATE_BUSINESS_REVIEW(businessId), data);
+};
+
+export const updateBusinessReview = async (
+  businessId: string,
+  reviewId: string,
+  data: BusinessReviewRequest,
+): Promise<BusinessReview> => {
+  const res = await http.patch<BusinessReview>(
+    API_ROUTES.UPDATE_BUSINESS_REVIEW(businessId, reviewId),
+    data,
   );
   return res.data;
 };

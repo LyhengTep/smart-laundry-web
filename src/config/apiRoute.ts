@@ -38,6 +38,11 @@ export const API_ROUTES = {
   DEVICE_TOKENS_BY_DRIVER: (driver_id: number) =>
     `/device-tokens/by-driver/${driver_id}`,
 
+  GET_BUSINESS_REVIEWS: (businessId: string) => `/businesses/${businessId}/reviews`,
+  GET_BUSINESS_REVIEW_SUMMARY: (businessId: string) => `/businesses/${businessId}/reviews/summary`,
+  CREATE_BUSINESS_REVIEW: (businessId: string) => `/businesses/${businessId}/reviews`,
+  UPDATE_BUSINESS_REVIEW: (businessId: string, reviewId: string) =>
+    `/businesses/${businessId}/reviews/${reviewId}`,
   GET_ACTIVE_ASSIGNMENT: "/drivers/pending/get-current-assignment",
   GET_DRIVER_REVENUE: "/drivers/me/revenue",
   GET_BUSINESS_REVENUE: (businessId: string) => `/businesses/${businessId}/revenue`,
