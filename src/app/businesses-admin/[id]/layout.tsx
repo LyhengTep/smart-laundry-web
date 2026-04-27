@@ -40,7 +40,7 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
   const shopName = business?.name ?? "{shopName}";
   const shopStatus = business?.status;
   const isOpen = shopStatus === "OPEN";
-  const canToggle = shopStatus === "OPEN" || shopStatus === "CLOSED";
+  const canToggle = shopStatus === "OPEN" || shopStatus === "CLOSED" || shopStatus === "APPROVED";
 
   const [statusError, setStatusError] = useState<string | null>(null);
   const [pendingWarning, setPendingWarning] = useState<ShopStatusResponse | null>(null);
@@ -243,7 +243,9 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
                       <p className="font-bold text-gray-800 text-sm">Shop Status</p>
                       <p className="text-xs text-gray-400">
                         {canToggle
-                          ? "Toggle to open or close your shop"
+                          ? shopStatus === "APPROVED"
+                            ? "Your shop is approved — toggle to open for business"
+                            : "Toggle to open or close your shop"
                           : `Cannot change while status is ${shopStatus}`}
                       </p>
                     </div>
