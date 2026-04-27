@@ -47,4 +47,5 @@ export const API_ROUTES = {
   GET_DRIVER_REVENUE: "/drivers/me/revenue",
   GET_BUSINESS_REVENUE: (businessId: string) => `/businesses/${businessId}/revenue`,
   UPDATE_BUSINESS_STATUS: (businessId: string) => `/businesses/${businessId}/status`,
+  UPDATE_SHOP_STATUS: (businessId: string) => `/businesses/${businessId}/shop-status`,
 };

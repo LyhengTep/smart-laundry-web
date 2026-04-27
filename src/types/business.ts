@@ -166,3 +166,16 @@ export interface BusinessServiceRequest {
   base_price: number;
   pricing_type: PricingType;
 }
+
+export interface ShopStatusRequest {
+  action: "OPEN" | "CLOSE";
+  force: boolean;
+}
+
+export interface ShopStatusResponse {
+  shop_id: string;
+  status: string;
+  message: string;
+  warning?: string;
+  active_order_count?: number;
+}

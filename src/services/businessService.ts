@@ -11,6 +11,8 @@ import {
   BusinessServiceRequest,
   BusinessUpdateRequest,
   LaundryServiceResponse,
+  ShopStatusRequest,
+  ShopStatusResponse,
 } from "@/types/business";
 
 export const getBusinesses = async (
@@ -85,6 +87,17 @@ export const updateBusinessStatus = async (
   const res = await http.patch<BusinessResponse>(
     API_ROUTES.UPDATE_BUSINESS_STATUS(id),
     { status },
+  );
+  return res.data;
+};
+
+export const updateShopStatus = async (
+  businessId: string,
+  data: ShopStatusRequest,
+): Promise<ShopStatusResponse> => {
+  const res = await http.patch<ShopStatusResponse>(
+    API_ROUTES.UPDATE_SHOP_STATUS(businessId),
+    data,
   );
   return res.data;
 };

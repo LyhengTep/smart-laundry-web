@@ -1,10 +1,13 @@
 "use client";
 import {
   getBusinessById,
-  updateBusinessStatus,
+  updateShopStatus,
 } from "@/services/businessService";
+import { ShopStatusResponse } from "@/types/business";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import {
+  AlertTriangle,
   Check,
   ChevronLeft,
   LayoutDashboard,
@@ -13,6 +16,7 @@ import {
   MessageSquare,
   Package,
   Settings,
+  ShieldOff,
   Store,
   X,
 } from "lucide-react";
@@ -38,13 +42,56 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
   const isOpen = shopStatus === "OPEN";
   const canToggle = shopStatus === "OPEN" || shopStatus === "CLOSED";
 
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [pendingWarning, setPendingWarning] = useState<ShopStatusResponse | null>(null);
+  const [pendingAction, setPendingAction] = useState<"OPEN" | "CLOSE" | null>(null);
+
   const toggleStatusMutation = useMutation({
-    mutationFn: (status: "OPEN" | "CLOSED") =>
-      updateBusinessStatus(params.id, status),
-    onSuccess: () => {
+    mutationFn: ({ action, force }: { action: "OPEN" | "CLOSE"; force: boolean }) =>
+      updateShopStatus(params.id, { action, force }),
+    onSuccess: (data) => {
+      if (data.warning && !pendingWarning) {
+        setPendingWarning(data);
+        setPendingAction(pendingAction);
+        return;
+      }
+      setPendingWarning(null);
+      setPendingAction(null);
+      setStatusError(null);
       queryClient.invalidateQueries({ queryKey: ["business", params.id] });
     },
+    onError: (e) => {
+      if (axios.isAxiosError(e)) {
+        const status = e.response?.status;
+        const detail = (e.response?.data as { detail?: string; message?: string })?.detail
+          ?? (e.response?.data as { detail?: string; message?: string })?.message;
+        if (status === 409) {
+          setStatusError(detail ?? "Shop is already in this status.");
+          return;
+        }
+        if (status === 403) {
+          setStatusError("You are not authorized to change this shop's status.");
+          return;
+        }
+        setStatusError(detail ?? "Failed to update shop status.");
+        return;
+      }
+      setStatusError("Failed to update shop status. Please try again.");
+    },
   });
+
+  const handleToggle = () => {
+    const action = isOpen ? "CLOSE" : "OPEN";
+    setStatusError(null);
+    setPendingWarning(null);
+    setPendingAction(action);
+    toggleStatusMutation.mutate({ action, force: false });
+  };
+
+  const handleForceConfirm = () => {
+    if (!pendingAction) return;
+    toggleStatusMutation.mutate({ action: pendingAction, force: true });
+  };
 
   const navItems = [
     {
@@ -183,18 +230,17 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-3">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {/* Toggle row */}
+              <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Store
                       size={20}
                       className={isOpen ? "text-green-600" : "text-slate-400"}
                     />
                     <div>
-                      <p className="font-bold text-gray-800 text-sm">
-                        Shop Status
-                      </p>
+                      <p className="font-bold text-gray-800 text-sm">Shop Status</p>
                       <p className="text-xs text-gray-400">
                         {canToggle
                           ? "Toggle to open or close your shop"
@@ -205,28 +251,33 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
                   <button
                     type="button"
                     disabled={!canToggle || toggleStatusMutation.isPending}
-                    onClick={() =>
-                      toggleStatusMutation.mutate(isOpen ? "CLOSED" : "OPEN")
-                    }
+                    onClick={handleToggle}
                     className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                       isOpen ? "bg-green-500" : "bg-slate-300"
                     }`}
                   >
-                    {toggleStatusMutation.isPending ? (
+                    {toggleStatusMutation.isPending && !pendingWarning ? (
                       <Loader2
                         size={12}
                         className="absolute left-1/2 -translate-x-1/2 text-white animate-spin"
                       />
                     ) : (
                       <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isOpen ? "translate-x-6" : "translate-x-1"}`}
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                          isOpen ? "translate-x-6" : "translate-x-1"
+                        }`}
                       />
                     )}
                   </button>
                 </div>
+
                 <div className="pt-3 border-t border-gray-200">
                   <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${isOpen ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                      isOpen
+                        ? "bg-green-100 text-green-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
                   >
                     {isOpen ? (
                       <Check size={11} strokeWidth={3} />
@@ -237,6 +288,57 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
                   </span>
                 </div>
               </div>
+
+              {/* Warning — active orders */}
+              {pendingWarning && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-amber-800">
+                        Active Orders Warning
+                      </p>
+                      <p className="text-sm text-amber-700 mt-1 leading-relaxed">
+                        {pendingWarning.warning ??
+                          `You have ${pendingWarning.active_order_count ?? 0} active order${
+                            (pendingWarning.active_order_count ?? 0) !== 1 ? "s" : ""
+                          }. Closing will not cancel existing orders.`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPendingWarning(null);
+                        setPendingAction(null);
+                      }}
+                      className="flex-1 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleForceConfirm}
+                      disabled={toggleStatusMutation.isPending}
+                      className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {toggleStatusMutation.isPending ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : null}
+                      Close Anyway
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 403 / 409 error */}
+              {statusError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+                  <ShieldOff size={16} className="text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700 font-medium">{statusError}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
