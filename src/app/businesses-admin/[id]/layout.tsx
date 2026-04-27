@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Loader2,
   Menu,
+  MessageSquare,
   Package,
   Settings,
   Store,
@@ -55,6 +56,11 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
       icon: <Package size={20} />,
       label: "Orders",
       href: `/businesses-admin/${params.id}/orders`,
+    },
+    {
+      icon: <MessageSquare size={20} />,
+      label: "Reviews",
+      href: `/businesses-admin/${params.id}/reviews`,
     },
     {
       icon: <Store size={20} />,
