@@ -1,3 +1,9 @@
+export interface BusinessReviewSummaryEmbed {
+  business_id: string;
+  average_rating: number;
+  total_reviews: number;
+}
+
 export interface Business {
   id: string;
   owner_id: string;
@@ -19,6 +25,7 @@ export interface Business {
   business_license_number: string;
   open_time?: string;
   close_time?: string;
+  review_summary?: BusinessReviewSummaryEmbed;
   created_at?: string;
   updated_at?: string;
 }
@@ -113,6 +120,45 @@ export interface LaundryServiceListResponse {
 }
 
 export type PricingType = "per_item" | "per_kg" | "fixed";
+
+export interface BusinessReviewCustomer {
+  id: string;
+  full_name: string;
+  user_name: string;
+  email: string;
+  phone: string;
+  role: string;
+}
+
+export interface BusinessReview {
+  id: string;
+  business_id: string;
+  customer_id: string;
+  rating: number;
+  comment?: string;
+  customer: BusinessReviewCustomer;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessReviewSummary {
+  business_id: string;
+  average_rating: number;
+  total_reviews: number;
+}
+
+export interface BusinessReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
+export interface BusinessReviewListResponse {
+  items: BusinessReview[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
 
 export interface BusinessServiceRequest {
   business_id: string;

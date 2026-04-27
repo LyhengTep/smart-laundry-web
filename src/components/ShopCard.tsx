@@ -68,8 +68,13 @@ export function ShopCard({ shop }: { shop: Business }) {
             <div className="flex items-center gap-1 text-amber-500 font-bold shrink-0">
               <Star size={14} fill="currentColor" />
               <span className="text-sm">
-                {(shop.rating_avg ?? 0).toFixed(1)}
+                {(shop.review_summary?.average_rating ?? shop.rating_avg ?? 0).toFixed(1)}
               </span>
+              {(shop.review_summary?.total_reviews ?? 0) > 0 && (
+                <span className="text-xs text-slate-400 font-normal">
+                  ({shop.review_summary!.total_reviews})
+                </span>
+              )}
             </div>
           </div>
 
