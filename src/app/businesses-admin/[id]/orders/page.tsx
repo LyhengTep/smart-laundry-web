@@ -131,43 +131,57 @@ export default function OrderManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [page, setPage] = useState(1);
+  const [livePage, setLivePage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm.trim());
-      setPage(1);
+      setLivePage(1);
+      setHistoryPage(1);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
   useEffect(() => {
-    setPage(1);
+    setLivePage(1);
+    setHistoryPage(1);
   }, [statusFilter, activeSection]);
 
-  const queryParams = useMemo(() => {
-    const params: Record<string, string | number> = {
-      page,
+  const baseSearch = useMemo(() => {
+    const p: Record<string, string | number> = {
       size: 10,
       business_id:
         searchField === "business_id" && debouncedSearchTerm
           ? debouncedSearchTerm
           : businessId,
     };
+    if (debouncedSearchTerm && searchField === "customer_id") p.customer_id = debouncedSearchTerm;
+    if (debouncedSearchTerm && searchField === "order_no") p.order_no = debouncedSearchTerm;
+    return p;
+  }, [businessId, debouncedSearchTerm, searchField]);
 
-    if (debouncedSearchTerm && searchField === "customer_id") {
-      params.customer_id = debouncedSearchTerm;
-    }
-    if (debouncedSearchTerm && searchField === "order_no") {
-      params.order_no = debouncedSearchTerm;
-    }
-    if (statusFilter) {
-      params.status = statusFilter;
-    }
-    return params;
-  }, [businessId, debouncedSearchTerm, searchField, statusFilter]);
+  const liveQueryParams = useMemo(() => {
+    const p: Record<string, string | number> = { ...baseSearch, page: livePage };
+    if (statusFilter && LIVE_STATUS_OPTIONS.includes(statusFilter)) p.status = statusFilter;
+    return p;
+  }, [baseSearch, livePage, statusFilter]);
 
-  const { data, isLoading } = useOrders(queryParams);
+  const historyQueryParams = useMemo(() => {
+    const p: Record<string, string | number> = { ...baseSearch, page: historyPage };
+    if (statusFilter && HISTORY_STATUS_OPTIONS.includes(statusFilter)) p.status = statusFilter;
+    return p;
+  }, [baseSearch, historyPage, statusFilter]);
+
+  const { data: liveData, isLoading: isLiveLoading } = useOrders(
+    activeSection === "orders" ? liveQueryParams : undefined,
+  );
+  const { data: historyData, isLoading: isHistoryLoading } = useOrders(
+    activeSection === "history" ? historyQueryParams : undefined,
+  );
+
+  const data = activeSection === "orders" ? liveData : historyData;
+  const isLoading = activeSection === "orders" ? isLiveLoading : isHistoryLoading;
   const [hiddenPendingOrderIds, setHiddenPendingOrderIds] = useState<string[]>(
     [],
   );
@@ -426,13 +440,22 @@ export default function OrderManagementPage() {
 
       {(data?.pages ?? 0) > 1 && (
         <ListingPagination
-          currentPage={page}
+          currentPage={activeSection === "orders" ? livePage : historyPage}
           pages={data?.pages ?? 0}
-          onForward={() => setPage((p) => Math.min(p + 1, data?.pages ?? p))}
-          onBackward={() => setPage((p) => Math.max(p - 1, 1))}
-          onPageClick={(p) => {
+          onForward={() =>
+            activeSection === "orders"
+              ? setLivePage((p) => Math.min(p + 1, data?.pages ?? p))
+              : setHistoryPage((p) => Math.min(p + 1, data?.pages ?? p))
+          }
+          onBackward={() =>
+            activeSection === "orders"
+              ? setLivePage((p) => Math.max(p - 1, 1))
+              : setHistoryPage((p) => Math.max(p - 1, 1))
+          }
+          onPageClick={(p: number) => {
             const n = Number(p);
-            if (!isNaN(n)) setPage(n);
+            if (!isNaN(n))
+              activeSection === "orders" ? setLivePage(n) : setHistoryPage(n);
           }}
         />
       )}
