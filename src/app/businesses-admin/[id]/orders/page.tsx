@@ -6,6 +6,7 @@ import { OrdersStatsBar } from "@/components/orders/OrdersStatsBar";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 import { PendingOrdersRibbon } from "@/components/orders/PendingOrdersRibbon";
 import { OrderItem, OrderSection } from "@/components/orders/types";
+import { ListingPagination } from "@/components/ListingPagination";
 import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { useOrders } from "@/hooks/orders/orderHook";
@@ -130,17 +131,23 @@ export default function OrderManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm.trim());
+      setPage(1);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, activeSection]);
+
   const queryParams = useMemo(() => {
     const params: Record<string, string | number> = {
-      page: 1,
+      page,
       size: 10,
       business_id:
         searchField === "business_id" && debouncedSearchTerm
@@ -416,6 +423,19 @@ export default function OrderManagementPage() {
         onStatusFilterChange={setStatusFilter}
         statusOptions={statusOptions}
       />
+
+      {(data?.pages ?? 0) > 1 && (
+        <ListingPagination
+          currentPage={page}
+          pages={data?.pages ?? 0}
+          onForward={() => setPage((p) => Math.min(p + 1, data?.pages ?? p))}
+          onBackward={() => setPage((p) => Math.max(p - 1, 1))}
+          onPageClick={(p) => {
+            const n = Number(p);
+            if (!isNaN(n)) setPage(n);
+          }}
+        />
+      )}
 
       <OrderDetailDrawer
         key={selectedOrder?.orderId ?? "order-detail-drawer"}
