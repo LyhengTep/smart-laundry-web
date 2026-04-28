@@ -35,9 +35,8 @@ function timeAgo(iso?: string) {
 }
 
 function MapEmbed({ lat, lng, label }: { lat: number; lng: number; label: string }) {
-  const delta = 0.006;
-  const bbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`;
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+  const src = `https://www.google.com/maps/embed/v1/view?key=${apiKey}&center=${lat},${lng}&zoom=15&maptype=roadmap`;
   return (
     <div className="rounded-2xl overflow-hidden border border-slate-200">
       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-2 bg-slate-50 border-b border-slate-100">
@@ -47,10 +46,11 @@ function MapEmbed({ lat, lng, label }: { lat: number; lng: number; label: string
         title={label}
         src={src}
         width="100%"
-        height="180"
+        height="200"
         loading="lazy"
         className="block"
-        sandbox="allow-scripts allow-same-origin"
+        allowFullScreen
+        referrerPolicy="no-referrer-when-downgrade"
       />
     </div>
   );
