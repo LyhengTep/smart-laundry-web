@@ -1,5 +1,6 @@
 "use client";
 
+import { NotificationBell } from "@/components/NotificationBell";
 import { UserAuthResponse } from "@/types/auth";
 import { LogIn, Menu, User } from "lucide-react";
 import Link from "next/link";
@@ -103,8 +104,9 @@ export default function Navbar(props: NavProps) {
           <div className="hidden md:flex items-center gap-4">
             {props.user ? (
               <>
+                <NotificationBell />
                 <Link
-                  href="/user/profile"
+                  href={props.user?.role === "CUSTOMER" ? `/customers/${props.user.id}/profile` : "/"}
                   className="flex text-slate-600 dark:text-slate-300 font-medium hover:text-blue-600 transition"
                 >
                   <User className="mx-1" />

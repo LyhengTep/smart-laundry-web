@@ -49,4 +49,7 @@ export const API_ROUTES = {
   GET_BUSINESS_REVENUE: (businessId: string) => `/businesses/${businessId}/revenue`,
   UPDATE_BUSINESS_STATUS: (businessId: string) => `/businesses/${businessId}/status`,
   UPDATE_SHOP_STATUS: (businessId: string) => `/businesses/${businessId}/shop-status`,
+
+  FETCH_MY_NOTIFICATIONS: "/notifications/mine",
+  MARK_NOTIFICATION_READ: (notificationId: string) => `/notifications/${notificationId}/read`,
 };

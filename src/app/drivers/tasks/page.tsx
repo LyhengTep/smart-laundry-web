@@ -2,6 +2,7 @@
 
 import CollectFromCustomerModal from "@/components/CollectFromCustomerModal";
 import CollectFromShopModal from "@/components/CollectFromShopModal";
+import { NotificationBell } from "@/components/NotificationBell";
 import DriverActiveTaskCard from "@/components/drivers/DriverActiveTaskCard";
 import DriverBottomNav from "@/components/drivers/DriverBottomNav";
 import DriverHistoryTab from "@/components/drivers/DriverHistoryTab";
@@ -34,7 +35,7 @@ import { getDriverActiveTaskLabel } from "@/utils/common";
 import { toToastMessage } from "@/utils/toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Bell, LogOut, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useMemo, useState } from "react";
 import useWebSocket from "react-use-websocket";
@@ -355,13 +356,7 @@ export default function DriverTasksPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="relative p-3 bg-slate-900 rounded-2xl border border-white/5"
-            >
-              <Bell size={20} className="text-slate-400" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-900" />
-            </button>
+            <NotificationBell dark />
             <button
               type="button"
               onClick={handleLogout}

@@ -1,4 +1,5 @@
 "use client";
+import { NotificationBell } from "@/components/NotificationBell";
 import {
   getBusinessById,
   updateShopStatus,
@@ -180,6 +181,10 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         <div className="px-4 pb-6 space-y-1">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <NotificationBell />
+            <span className="text-sm font-medium text-gray-400">Notifications</span>
+          </div>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -209,12 +214,13 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
           >
             <Menu size={22} />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <div className="bg-blue-600 p-1 rounded-md text-white">
               <Store size={16} />
             </div>
             <span className="font-bold text-slate-900">{shopName}</span>
           </div>
+          <NotificationBell />
         </header>
 
         {children}
