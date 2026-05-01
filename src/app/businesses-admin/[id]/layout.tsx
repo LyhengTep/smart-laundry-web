@@ -258,16 +258,19 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
         </header>
 
         {/* Desktop top bar */}
-        <header className="hidden md:flex sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 items-center justify-end gap-2">
-          <NotificationBell />
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all text-sm font-semibold"
-          >
-            <LogOut size={16} />
-            Log out
-          </button>
+        <header className="hidden md:flex sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 items-center justify-between gap-2">
+          <h1 className="text-base font-semibold text-gray-800">{shopName}</h1>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all text-sm font-semibold"
+            >
+              <LogOut size={16} />
+              Log out
+            </button>
+          </div>
         </header>
 
         {children}

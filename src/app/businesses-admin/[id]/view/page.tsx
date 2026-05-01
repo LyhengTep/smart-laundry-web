@@ -6,7 +6,6 @@ import { updateOrderStatus } from "@/services/orderService";
 import { LaundryOrder } from "@/types/order";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Bell,
   Check,
   CheckCircle2,
   Clock,
@@ -307,22 +306,6 @@ const BusinessDashboard = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      {/* Top Header */}
-      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
-        <h1 className="text-lg font-semibold text-gray-800">
-          Business Management
-        </h1>
-        <div className="flex items-center gap-4">
-          <button className="p-2 text-gray-400 hover:text-blue-600 relative">
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-          </button>
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
-            JD
-          </div>
-        </div>
-      </header>
-
       <div className="p-8 max-w-6xl mx-auto">
         {/* Welcome & Quick Action */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
