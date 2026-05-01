@@ -7,6 +7,10 @@ import {
 import { ShopStatusResponse } from "@/types/business";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { STORAGE_KEYS } from "@/config/common";
+import { useLocalStorage } from "@/hooks/localStorage";
+import { clearAuthSession, logout } from "@/services/authService";
+import { UserAuthResponse } from "@/types/auth";
 import {
   AlertTriangle,
   Check,
@@ -15,6 +19,7 @@ import {
   Info,
   LayoutDashboard,
   Loader2,
+  LogOut,
   Menu,
   MessageSquare,
   Package,
@@ -24,15 +29,32 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
   const params = useParams<{ id: string }>();
   const pathname = usePathname();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { value: authUser, setValue: setAuthUser } =
+    useLocalStorage<UserAuthResponse | null>(STORAGE_KEYS.AUTH_USER, null);
+
+  const handleLogout = async () => {
+    try {
+      if (authUser?.id && authUser?.role) {
+        await logout({ user_id: authUser.id, role: authUser.role });
+      }
+    } catch {
+      // proceed even if API call fails
+    } finally {
+      clearAuthSession();
+      setAuthUser(null);
+      router.replace("/auth/login");
+    }
+  };
 
   const { data: business } = useQuery({
     queryKey: ["business", params.id],
@@ -196,6 +218,14 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
             <ChevronLeft size={18} />
             Back to My Shops
           </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-50 hover:text-red-600 transition-all text-sm font-medium"
+          >
+            <LogOut size={18} />
+            Log out
+          </button>
         </div>
       </aside>
 
