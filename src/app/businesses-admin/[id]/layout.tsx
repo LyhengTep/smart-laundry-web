@@ -1,9 +1,13 @@
 "use client";
 import { NotificationBell } from "@/components/NotificationBell";
+import { STORAGE_KEYS } from "@/config/common";
+import { useLocalStorage } from "@/hooks/localStorage";
+import { clearAuthSession, logout } from "@/services/authService";
 import {
   getBusinessById,
   updateShopStatus,
 } from "@/services/businessService";
+import { UserAuthResponse } from "@/types/auth";
 import { ShopStatusResponse } from "@/types/business";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -15,6 +19,7 @@ import {
   Info,
   LayoutDashboard,
   Loader2,
+  LogOut,
   Menu,
   MessageSquare,
   Package,
@@ -24,15 +29,32 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
   const params = useParams<{ id: string }>();
   const pathname = usePathname();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { value: authUser, setValue: setAuthUser } =
+    useLocalStorage<UserAuthResponse | null>(STORAGE_KEYS.AUTH_USER, null);
+
+  const handleLogout = async () => {
+    try {
+      if (authUser?.id && authUser?.role) {
+        await logout({ user_id: authUser.id, role: authUser.role });
+      }
+    } catch {
+      // proceed even if API call fails
+    } finally {
+      clearAuthSession();
+      setAuthUser(null);
+      router.replace("/auth/login");
+    }
+  };
 
   const { data: business } = useQuery({
     queryKey: ["business", params.id],
@@ -196,6 +218,14 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
             <ChevronLeft size={18} />
             Back to My Shops
           </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-50 hover:text-red-600 transition-all text-sm font-medium"
+          >
+            <LogOut size={18} />
+            Log out
+          </button>
         </div>
       </aside>
 
@@ -217,11 +247,27 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
             <span className="font-bold text-slate-900">{shopName}</span>
           </div>
           <NotificationBell />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="p-2 rounded-xl text-red-400 hover:bg-red-50 transition-all"
+            aria-label="Log out"
+          >
+            <LogOut size={20} />
+          </button>
         </header>
 
         {/* Desktop top bar */}
-        <header className="hidden md:flex sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 items-center justify-end">
+        <header className="hidden md:flex sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 items-center justify-end gap-2">
           <NotificationBell />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all text-sm font-semibold"
+          >
+            <LogOut size={16} />
+            Log out
+          </button>
         </header>
 
         {children}
