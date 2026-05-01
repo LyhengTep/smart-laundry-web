@@ -181,10 +181,6 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         <div className="px-4 pb-6 space-y-1">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <NotificationBell />
-            <span className="text-sm font-medium text-gray-400">Notifications</span>
-          </div>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -220,6 +216,11 @@ const BusinessLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             <span className="font-bold text-slate-900">{shopName}</span>
           </div>
+          <NotificationBell />
+        </header>
+
+        {/* Desktop top bar */}
+        <header className="hidden md:flex sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 items-center justify-end">
           <NotificationBell />
         </header>
 
