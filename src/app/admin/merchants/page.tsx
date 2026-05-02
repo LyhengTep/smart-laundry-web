@@ -3,7 +3,7 @@
 import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { useUsers } from "@/hooks/users/userHook";
-import { approveUser, deactivateUser, deleteUser } from "@/services/userService";
+import { approveUser, deactivateUser } from "@/services/userService";
 import { User } from "@/types/user";
 import { formatDateUTC7 } from "@/utils/date";
 import { toToastMessage } from "@/utils/toast";
@@ -12,12 +12,13 @@ import axios from "axios";
 import {
   CheckCircle,
   Filter,
+  Pencil,
   PowerOff,
   Search,
   ShieldCheck,
   Store,
-  Trash2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE" | "SUSPENDED" | "REJECTED";
@@ -55,16 +56,7 @@ function useUserMutations(queryClient: ReturnType<typeof useQueryClient>, toastC
     ...mutationOptions("Merchant deactivated successfully."),
   });
 
-  const { mutate: remove, isPending: isDeleting } = useMutation({
-    mutationFn: (userId: string) => deleteUser(userId),
-    ...mutationOptions("Merchant deleted successfully."),
-  });
-
-  return {
-    approve, isApproving,
-    deactivate, isDeactivating,
-    remove, isDeleting,
-  };
+  return { approve, isApproving, deactivate, isDeactivating };
 }
 
 export default function MerchantsPage() {
@@ -75,6 +67,7 @@ export default function MerchantsPage() {
   });
   const [searchTerm, setSearchTerm] = useState("");
 
+  const router = useRouter();
   const queryClient = useQueryClient();
   const toastCtx = useContext(ToastContext);
   const dialogCtx = useContext(DialogCtx);
@@ -86,10 +79,10 @@ export default function MerchantsPage() {
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 1;
 
-  const { approve, isApproving, deactivate, isDeactivating, remove, isDeleting } =
+  const { approve, isApproving, deactivate, isDeactivating } =
     useUserMutations(queryClient, toastCtx);
 
-  const isMutating = isApproving || isDeactivating || isDeleting;
+  const isMutating = isApproving || isDeactivating;
 
   const handleApprove = (user: User) => {
     dialogCtx.open({
@@ -112,18 +105,6 @@ export default function MerchantsPage() {
       confirmLabel: "Yes, Deactivate",
       tone: "danger",
       onConfirm: () => deactivate(user.id),
-    });
-  };
-
-  const handleDelete = (user: User) => {
-    dialogCtx.open({
-      title: "Delete Merchant?",
-      description: (
-        <>Permanently delete <strong>{user.full_name}</strong>'s account and all associated data. This action cannot be undone.</>
-      ),
-      confirmLabel: "Yes, Delete",
-      tone: "danger",
-      onConfirm: () => remove(user.id),
     });
   };
 
@@ -307,12 +288,11 @@ export default function MerchantsPage() {
                         )}
                         <button
                           type="button"
-                          disabled={isMutating}
-                          onClick={() => handleDelete(user)}
-                          className="p-2 rounded-xl text-red-400 hover:bg-red-50 transition disabled:opacity-50"
-                          title="Delete account"
+                          onClick={() => router.push(`/admin/merchants/${user.id}/edit`)}
+                          className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition"
+                          title="Edit account"
                         >
-                          <Trash2 size={16} />
+                          <Pencil size={16} />
                         </button>
                       </div>
                     </td>

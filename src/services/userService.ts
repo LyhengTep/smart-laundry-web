@@ -19,6 +19,3 @@ export const deactivateUser = async (userId: string): Promise<void> => {
   await http.patch(API_ROUTES.DEACTIVATE_USER(userId));
 };
 
-export const deleteUser = async (userId: string): Promise<void> => {
-  await http.delete(API_ROUTES.DELETE_USER(userId));
-};
