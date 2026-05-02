@@ -45,6 +45,6 @@ export interface UserUpdateRequest {
   phone: string;
   role: string;
   status: string;
-  password?: string;
+  password: string;
   msg_token?: string;
 }

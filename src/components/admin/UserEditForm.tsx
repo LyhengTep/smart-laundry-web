@@ -108,10 +108,8 @@ export function UserEditForm({ userId, backHref, backLabel }: UserEditFormProps)
       phone: values.phone,
       role: values.role,
       status: values.status,
+      password: values.password?.trim() ?? "",
     };
-    if (values.password && values.password.trim() !== "") {
-      payload.password = values.password;
-    }
     mutate(payload);
   };
 
