@@ -37,3 +37,14 @@ export interface UserQueryParams {
   page?: number;
   size?: number;
 }
+
+export interface UserUpdateRequest {
+  full_name: string;
+  user_name: string;
+  email: string;
+  phone: string;
+  role: string;
+  status: string;
+  password?: string;
+  msg_token?: string;
+}

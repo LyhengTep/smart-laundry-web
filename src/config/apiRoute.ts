@@ -51,6 +51,8 @@ export const API_ROUTES = {
   UPDATE_SHOP_STATUS: (businessId: string) => `/businesses/${businessId}/shop-status`,
 
   FETCH_USERS: "/users",
+  GET_USER: (userId: string) => `/users/${userId}`,
+  UPDATE_USER: (userId: string) => `/users/${userId}`,
   APPROVE_USER: (userId: string) => `/users/${userId}/approve`,
   DEACTIVATE_USER: (userId: string) => `/users/${userId}/deactivate`,
   SEARCH_ORDER: "/orders/search",
