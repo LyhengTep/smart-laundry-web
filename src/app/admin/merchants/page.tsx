@@ -14,7 +14,7 @@ import {
   Filter,
   Search,
   ShieldCheck,
-  Users,
+  Store,
 } from "lucide-react";
 import { useContext, useState } from "react";
 
@@ -27,7 +27,7 @@ const STATUS_STYLE: Record<string, string> = {
   REJECTED: "bg-slate-100 text-slate-600",
 };
 
-export default function CustomersPage() {
+export default function MerchantsPage() {
   const [params, setParams] = useState({
     page: 1,
     size: 10,
@@ -39,7 +39,7 @@ export default function CustomersPage() {
   const toastCtx = useContext(ToastContext);
   const dialogCtx = useContext(DialogCtx);
 
-  const { data, isLoading, isError } = useUsers({ ...params, role: "CUSTOMER" });
+  const { data, isLoading, isError } = useUsers({ ...params, role: "MERCHANT" });
 
   const page = data?.page ?? params.page;
   const size = data?.size ?? params.size;
@@ -50,7 +50,7 @@ export default function CustomersPage() {
     mutationFn: (userId: string) => approveUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toastCtx?.setToast?.({ error: false, message: "Customer approved successfully." });
+      toastCtx?.setToast?.({ error: false, message: "Merchant approved successfully." });
       toastCtx?.setIsVisible(true);
     },
     onError: (e) => {
@@ -64,11 +64,11 @@ export default function CustomersPage() {
 
   const handleApprove = (user: User) => {
     dialogCtx.open({
-      title: "Approve Customer?",
+      title: "Approve Merchant?",
       description: (
         <>
-          This will activate <strong>{user.full_name}</strong>'s account so they
-          can start placing orders.
+          This will activate <strong>{user.full_name}</strong>'s merchant account
+          so they can register and manage their laundry shop.
         </>
       ),
       confirmLabel: "Yes, Approve",
@@ -102,8 +102,8 @@ export default function CustomersPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-3xl font-black text-slate-900">Customers</h1>
-        <p className="text-slate-500">Manage customer accounts and approve pending registrations.</p>
+        <h1 className="text-3xl font-black text-slate-900">Merchants</h1>
+        <p className="text-slate-500">Manage shop owner accounts and approve pending registrations.</p>
       </header>
 
       {/* Filters */}
@@ -140,7 +140,7 @@ export default function CustomersPage() {
       {!isLoading && pendingCount > 0 && (
         <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl px-5 py-3 text-sm font-medium">
           <ShieldCheck size={16} className="shrink-0" />
-          {pendingCount} customer{pendingCount > 1 ? "s are" : " is"} pending approval on this page.
+          {pendingCount} merchant{pendingCount > 1 ? "s are" : " is"} pending approval on this page.
         </div>
       )}
 
@@ -149,12 +149,12 @@ export default function CustomersPage() {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-xl">
-              <Users size={17} className="text-blue-600" />
+              <Store size={17} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Customers</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Merchants</p>
               <p className="text-slate-700 font-semibold text-sm">
-                {isLoading ? "Loading…" : `${total} customer${total !== 1 ? "s" : ""}`}
+                {isLoading ? "Loading…" : `${total} merchant${total !== 1 ? "s" : ""}`}
               </p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function CustomersPage() {
 
         {isError && (
           <div className="px-6 py-10 text-center text-red-500 text-sm font-medium">
-            Failed to load customers. Please try again.
+            Failed to load merchants. Please try again.
           </div>
         )}
 
@@ -186,9 +186,9 @@ export default function CustomersPage() {
         {!isLoading && !isError && filteredItems.length === 0 && (
           <div className="px-6 py-16 text-center">
             <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Users size={22} className="text-slate-300" />
+              <Store size={22} className="text-slate-300" />
             </div>
-            <p className="text-slate-400 text-sm font-medium">No customers match your filters.</p>
+            <p className="text-slate-400 text-sm font-medium">No merchants match your filters.</p>
           </div>
         )}
 
@@ -197,7 +197,7 @@ export default function CustomersPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">User</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Merchant</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Contact</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Status</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Joined</th>
@@ -209,7 +209,7 @@ export default function CustomersPage() {
                   <tr key={user.id} className="hover:bg-slate-50/60 transition">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
                           {user.full_name.charAt(0).toUpperCase()}
                         </div>
                         <div>

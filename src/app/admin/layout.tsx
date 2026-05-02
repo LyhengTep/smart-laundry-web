@@ -7,16 +7,21 @@ import {
   Clock,
   LogOut,
   ShieldCheck,
+  Store,
   User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { useDrivers } from "@/hooks/drivers/driverHook";
-import { clearAuthSession, getCurrentUser, logout } from "@/services/authService";
 import { STORAGE_KEYS } from "@/config/common";
+import { useDrivers } from "@/hooks/drivers/driverHook";
 import { useLocalStorage } from "@/hooks/localStorage";
+import {
+  clearAuthSession,
+  getCurrentUser,
+  logout,
+} from "@/services/authService";
 import { UserAuthResponse } from "@/types/auth";
 
 const navItemClass = (active: boolean, collapsed: boolean) =>
@@ -95,7 +100,7 @@ export default function AdminLayout({
         {/* Sidebar header */}
         <div className="flex items-center justify-between p-6 mb-4">
           <div className="flex items-center gap-2 text-blue-400 font-black text-xl">
-            <span className={collapsed ? "sr-only" : ""}>SmartWash</span>
+            <span className={collapsed ? "sr-only" : ""}>Smart Laundry</span>
             {!collapsed && (
               <span className="text-white text-xs bg-slate-700 px-2 py-1 rounded">
                 Admin
@@ -124,6 +129,13 @@ export default function AdminLayout({
           >
             <User size={collapsed ? 26 : 18} />
             {!collapsed && <span>Customers</span>}
+          </Link>
+          <Link
+            href="/admin/merchants"
+            className={navItemClass(pathname === "/admin/merchants", collapsed)}
+          >
+            <Store size={collapsed ? 26 : 18} />
+            {!collapsed && <span>Merchants</span>}
           </Link>
           <Link
             href="/admin/drivers"
