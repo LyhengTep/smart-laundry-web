@@ -5,15 +5,19 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  LogOut,
   ShieldCheck,
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound, usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { useDrivers } from "@/hooks/drivers/driverHook";
-import { getCurrentUser } from "@/services/authService";
+import { clearAuthSession, getCurrentUser, logout } from "@/services/authService";
+import { STORAGE_KEYS } from "@/config/common";
+import { useLocalStorage } from "@/hooks/localStorage";
+import { UserAuthResponse } from "@/types/auth";
 
 const navItemClass = (active: boolean, collapsed: boolean) =>
   [
@@ -28,26 +32,68 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data } = useDrivers({ page: 1, size: 1, status: "INACTIVE" });
   const pendingCount = data?.total ?? 0;
   const [collapsed, setCollapsed] = useState(false);
+  const [ready, setReady] = useState(false);
+  const { value, setValue } = useLocalStorage<UserAuthResponse | null>(
+    STORAGE_KEYS.AUTH_USER,
+    null,
+  );
 
-  const user = getCurrentUser();
+  const isLoginPage = pathname === "/admin/login";
 
-  if (user && user.role !== "ADMIN") {
-    console.log("Current User in Admin Layout:", user);
-    notFound();
+  useEffect(() => {
+    if (isLoginPage) {
+      setReady(true);
+      return;
+    }
+    const user = getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      router.replace("/admin/login");
+    } else {
+      setReady(true);
+    }
+  }, [isLoginPage, router]);
+
+  const handleLogout = async () => {
+    try {
+      if (value?.id && value?.role) {
+        await logout({ user_id: value.id, role: value.role });
+      }
+    } catch {
+      // continue regardless of API error
+    } finally {
+      clearAuthSession();
+      setValue(null);
+      router.replace("/admin/login");
+    }
+  };
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <span className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
   }
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       <aside
         className={[
-          "bg-slate-900 text-white p-6 transition-all duration-200",
+          "bg-slate-900 text-white flex flex-col transition-all duration-200",
           collapsed ? "md:w-20" : "md:w-64",
           "w-full",
         ].join(" ")}
       >
-        <div className="flex items-center justify-between mb-10">
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between p-6 mb-4">
           <div className="flex items-center gap-2 text-blue-400 font-black text-xl">
             <span className={collapsed ? "sr-only" : ""}>SmartWash</span>
             {!collapsed && (
@@ -64,7 +110,9 @@ export default function AdminLayout({
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
         </div>
-        <nav className="space-y-2">
+
+        {/* Nav links */}
+        <nav className="flex-1 px-4 space-y-2">
           {!collapsed && (
             <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
               Management
@@ -113,6 +161,21 @@ export default function AdminLayout({
             {!collapsed && <span>Order Logs</span>}
           </Link>
         </nav>
+
+        {/* Logout */}
+        <div className="p-4 mt-auto border-t border-slate-800">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={[
+              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all text-sm font-medium",
+              collapsed ? "justify-center" : "",
+            ].join(" ")}
+          >
+            <LogOut size={18} />
+            {!collapsed && <span>Log out</span>}
+          </button>
+        </div>
       </aside>
 
       <main className="flex-1 p-8">{children}</main>
