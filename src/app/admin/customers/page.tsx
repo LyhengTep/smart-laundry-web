@@ -1,10 +1,16 @@
 "use client";
 
+import { DialogCtx } from "@/contexts/DialogProvider";
+import { ToastContext } from "@/contexts/ToastProvider";
 import { useUsers } from "@/hooks/users/userHook";
+import { approveUser } from "@/services/userService";
 import { User } from "@/types/user";
 import { formatDateUTC7 } from "@/utils/date";
+import { toToastMessage } from "@/utils/toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import {
-  Bike,
+  CheckCircle,
   Filter,
   Search,
   ShieldCheck,
@@ -12,10 +18,10 @@ import {
   User as UserIcon,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 
+type TabRole = "CUSTOMER" | "MERCHANT";
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE" | "SUSPENDED" | "REJECTED";
-type RoleFilter = "ALL" | "ADMIN" | "MERCHANT" | "DRIVER" | "CUSTOMER";
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: "bg-emerald-50 text-emerald-700",
@@ -24,61 +30,71 @@ const STATUS_STYLE: Record<string, string> = {
   REJECTED: "bg-slate-100 text-slate-600",
 };
 
-const ROLE_STYLE: Record<string, string> = {
-  ADMIN: "bg-violet-50 text-violet-700",
-  MERCHANT: "bg-blue-50 text-blue-700",
-  DRIVER: "bg-sky-50 text-sky-700",
-  CUSTOMER: "bg-slate-100 text-slate-600",
-};
-
-const ROLE_ICON: Record<string, React.ReactNode> = {
-  ADMIN: <ShieldCheck size={11} />,
-  MERCHANT: <Store size={11} />,
-  DRIVER: <Bike size={11} />,
-  CUSTOMER: <UserIcon size={11} />,
-};
-
-const AVATAR_BG: Record<string, string> = {
-  ADMIN: "bg-violet-100 text-violet-600",
-  MERCHANT: "bg-blue-100 text-blue-600",
-  DRIVER: "bg-sky-100 text-sky-600",
-  CUSTOMER: "bg-slate-100 text-slate-600",
-};
+const TABS: { key: TabRole; label: string; icon: React.ReactNode }[] = [
+  { key: "CUSTOMER", label: "Customers", icon: <UserIcon size={15} /> },
+  { key: "MERCHANT", label: "Merchants", icon: <Store size={15} /> },
+];
 
 export default function CustomersPage() {
+  const [activeTab, setActiveTab] = useState<TabRole>("CUSTOMER");
   const [params, setParams] = useState({
     page: 1,
     size: 10,
-    role: undefined as string | undefined,
     status: undefined as string | undefined,
   });
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data, isLoading, isError } = useUsers(params);
+  const queryClient = useQueryClient();
+  const toastCtx = useContext(ToastContext);
+  const dialogCtx = useContext(DialogCtx);
+
+  const { data, isLoading, isError } = useUsers({
+    ...params,
+    role: activeTab,
+  });
 
   const page = data?.page ?? params.page;
   const size = data?.size ?? params.size;
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 1;
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredItems: User[] =
-    normalizedSearch.length === 0
-      ? (data?.items ?? [])
-      : (data?.items ?? []).filter(
-          (u) =>
-            u.full_name.toLowerCase().includes(normalizedSearch) ||
-            u.user_name.toLowerCase().includes(normalizedSearch) ||
-            u.email.toLowerCase().includes(normalizedSearch) ||
-            u.phone.includes(normalizedSearch),
-        );
+  const { mutate: approve, isPending: isApproving } = useMutation({
+    mutationFn: (userId: string) => approveUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toastCtx?.setToast?.({ error: false, message: "Account approved successfully." });
+      toastCtx?.setIsVisible(true);
+    },
+    onError: (e) => {
+      const detail = axios.isAxiosError(e)
+        ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
+        : e instanceof Error
+          ? e.message
+          : "Something went wrong";
+      toastCtx?.setToast?.({ error: true, message: toToastMessage(detail) });
+      toastCtx?.setIsVisible(true);
+    },
+  });
 
-  const onRoleChange = (value: RoleFilter) => {
-    setParams((p) => ({
-      ...p,
-      page: 1,
-      role: value === "ALL" ? undefined : value,
-    }));
+  const handleApprove = (user: User) => {
+    dialogCtx.open({
+      title: "Approve Account?",
+      description: (
+        <>
+          This will activate <strong>{user.full_name}</strong>'s account so they
+          can start using the platform.
+        </>
+      ),
+      confirmLabel: "Yes, Approve",
+      tone: "success",
+      onConfirm: () => approve(user.id),
+    });
+  };
+
+  const onTabChange = (tab: TabRole) => {
+    setActiveTab(tab);
+    setSearchTerm("");
+    setParams({ page: 1, size: 10, status: undefined });
   };
 
   const onStatusChange = (value: StatusFilter) => {
@@ -93,12 +109,50 @@ export default function CustomersPage() {
     setParams((p) => ({ ...p, page: nextPage }));
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredItems: User[] =
+    normalizedSearch.length === 0
+      ? (data?.items ?? [])
+      : (data?.items ?? []).filter(
+          (u) =>
+            u.full_name.toLowerCase().includes(normalizedSearch) ||
+            u.user_name.toLowerCase().includes(normalizedSearch) ||
+            u.email.toLowerCase().includes(normalizedSearch) ||
+            u.phone.includes(normalizedSearch),
+        );
+
+  const pendingCount = (data?.items ?? []).filter(
+    (u) => u.status === "INACTIVE",
+  ).length;
+
   return (
     <div>
-      <header className="mb-8">
-        <h1 className="text-3xl font-black text-slate-900">Users</h1>
-        <p className="text-slate-500">Browse and filter all registered user accounts.</p>
+      <header className="mb-6">
+        <h1 className="text-3xl font-black text-slate-900">User Management</h1>
+        <p className="text-slate-500">
+          Manage customer and merchant accounts, approve pending registrations.
+        </p>
       </header>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit mb-6">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => onTabChange(tab.key)}
+            className={[
+              "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all",
+              activeTab === tab.key
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700",
+            ].join(" ")}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Filters */}
       <div className="mb-5 bg-white border border-slate-100 shadow-sm rounded-[2rem] p-4 md:p-5">
@@ -108,8 +162,7 @@ export default function CustomersPage() {
             Search & Filters
           </span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_180px] gap-3">
-          {/* Search */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-3">
           <div className="relative">
             <Search
               size={17}
@@ -123,20 +176,6 @@ export default function CustomersPage() {
             />
           </div>
 
-          {/* Role filter */}
-          <select
-            value={params.role ?? "ALL"}
-            onChange={(e) => onRoleChange(e.target.value as RoleFilter)}
-            className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 ring-blue-500"
-          >
-            <option value="ALL">All Roles</option>
-            <option value="CUSTOMER">Customer</option>
-            <option value="MERCHANT">Merchant</option>
-            <option value="DRIVER">Driver</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-
-          {/* Status filter */}
           <select
             value={params.status ?? "ALL"}
             onChange={(e) => onStatusChange(e.target.value as StatusFilter)}
@@ -144,27 +183,38 @@ export default function CustomersPage() {
           >
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
+            <option value="INACTIVE">Inactive (Pending)</option>
             <option value="SUSPENDED">Suspended</option>
             <option value="REJECTED">Rejected</option>
           </select>
         </div>
       </div>
 
+      {/* Pending notice */}
+      {!isLoading && pendingCount > 0 && (
+        <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl px-5 py-3 text-sm font-medium">
+          <ShieldCheck size={16} className="shrink-0" />
+          {pendingCount} account{pendingCount > 1 ? "s are" : " is"} pending
+          approval on this page.
+        </div>
+      )}
+
       {/* Table card */}
       <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-        {/* Table header bar */}
+        {/* Header bar */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-xl">
-              <Users size={18} className="text-blue-600" />
+              <Users size={17} className="text-blue-600" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Results
+                {activeTab === "CUSTOMER" ? "Customers" : "Merchants"}
               </p>
               <p className="text-slate-700 font-semibold text-sm">
-                {isLoading ? "Loading…" : `${total} user${total !== 1 ? "s" : ""}`}
+                {isLoading
+                  ? "Loading…"
+                  : `${total} ${activeTab === "CUSTOMER" ? "customer" : "merchant"}${total !== 1 ? "s" : ""}`}
               </p>
             </div>
           </div>
@@ -176,7 +226,7 @@ export default function CustomersPage() {
         {/* Error */}
         {isError && (
           <div className="px-6 py-10 text-center text-red-500 text-sm font-medium">
-            Failed to load users. Please try again.
+            Failed to load data. Please try again.
           </div>
         )}
 
@@ -184,7 +234,10 @@ export default function CustomersPage() {
         {isLoading && (
           <div className="divide-y divide-slate-50">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="px-6 py-4 flex items-center gap-4 animate-pulse">
+              <div
+                key={i}
+                className="px-6 py-4 flex items-center gap-4 animate-pulse"
+              >
                 <div className="w-10 h-10 rounded-full bg-slate-100 shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3 bg-slate-100 rounded w-1/3" />
@@ -199,8 +252,14 @@ export default function CustomersPage() {
 
         {/* Empty */}
         {!isLoading && !isError && filteredItems.length === 0 && (
-          <div className="px-6 py-16 text-center text-slate-400 text-sm">
-            No users match your search or filters.
+          <div className="px-6 py-16 text-center">
+            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Users size={22} className="text-slate-300" />
+            </div>
+            <p className="text-slate-400 text-sm font-medium">
+              No {activeTab === "CUSTOMER" ? "customers" : "merchants"} match
+              your filters.
+            </p>
           </div>
         )}
 
@@ -217,13 +276,13 @@ export default function CustomersPage() {
                     Contact
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
-                    Role
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                     Status
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                     Joined
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap text-right">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -234,7 +293,11 @@ export default function CustomersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${AVATAR_BG[user.role] ?? "bg-slate-100 text-slate-600"}`}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                            activeTab === "CUSTOMER"
+                              ? "bg-slate-100 text-slate-600"
+                              : "bg-blue-100 text-blue-600"
+                          }`}
                         >
                           {user.full_name.charAt(0).toUpperCase()}
                         </div>
@@ -252,17 +315,9 @@ export default function CustomersPage() {
                     {/* Contact */}
                     <td className="px-6 py-4">
                       <p className="text-sm text-slate-700">{user.email}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{user.phone}</p>
-                    </td>
-
-                    {/* Role badge */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${ROLE_STYLE[user.role] ?? "bg-slate-100 text-slate-600"}`}
-                      >
-                        {ROLE_ICON[user.role]}
-                        {user.role}
-                      </span>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {user.phone}
+                      </p>
                     </td>
 
                     {/* Status badge */}
@@ -270,13 +325,29 @@ export default function CustomersPage() {
                       <span
                         className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-lg ${STATUS_STYLE[user.status] ?? "bg-slate-100 text-slate-600"}`}
                       >
-                        {user.status}
+                        {user.status === "INACTIVE" ? "PENDING" : user.status}
                       </span>
                     </td>
 
-                    {/* Joined date */}
+                    {/* Joined */}
                     <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
                       {formatDateUTC7(user.created_at)}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-6 py-4 text-right">
+                      {user.status === "INACTIVE" && (
+                        <button
+                          type="button"
+                          disabled={isApproving}
+                          onClick={() => handleApprove(user)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition disabled:opacity-50"
+                          title="Approve account"
+                        >
+                          <CheckCircle size={13} />
+                          Approve
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -289,7 +360,8 @@ export default function CustomersPage() {
         {!isLoading && !isError && total > 0 && (
           <div className="px-6 py-4 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
             <p className="text-xs text-slate-400 font-medium">
-              Showing {(page - 1) * size + 1}–{Math.min(page * size, total)} of {total}
+              Showing {(page - 1) * size + 1}–{Math.min(page * size, total)} of{" "}
+              {total}
             </p>
             <div className="flex items-center gap-2">
               <button

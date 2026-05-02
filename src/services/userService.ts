@@ -10,3 +10,7 @@ export const getUsers = async (
   });
   return res.data;
 };
+
+export const approveUser = async (userId: string): Promise<void> => {
+  await http.patch(API_ROUTES.APPROVE_USER(userId));
+};

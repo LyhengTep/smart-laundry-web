@@ -51,6 +51,7 @@ export const API_ROUTES = {
   UPDATE_SHOP_STATUS: (businessId: string) => `/businesses/${businessId}/shop-status`,
 
   FETCH_USERS: "/users",
+  APPROVE_USER: (userId: string) => `/users/${userId}/approve`,
   SEARCH_ORDER: "/orders/search",
   FETCH_MY_NOTIFICATIONS: "/notifications/mine",
   MARK_NOTIFICATION_READ: (notificationId: string) => `/notifications/${notificationId}/read`,
