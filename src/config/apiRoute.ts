@@ -52,6 +52,8 @@ export const API_ROUTES = {
 
   FETCH_USERS: "/users",
   APPROVE_USER: (userId: string) => `/users/${userId}/approve`,
+  DEACTIVATE_USER: (userId: string) => `/users/${userId}/deactivate`,
+  DELETE_USER: (userId: string) => `/users/${userId}`,
   SEARCH_ORDER: "/orders/search",
   FETCH_MY_NOTIFICATIONS: "/notifications/mine",
   MARK_NOTIFICATION_READ: (notificationId: string) => `/notifications/${notificationId}/read`,

@@ -3,7 +3,7 @@
 import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { useUsers } from "@/hooks/users/userHook";
-import { approveUser } from "@/services/userService";
+import { approveUser, deactivateUser, deleteUser } from "@/services/userService";
 import { User } from "@/types/user";
 import { formatDateUTC7 } from "@/utils/date";
 import { toToastMessage } from "@/utils/toast";
@@ -12,8 +12,10 @@ import axios from "axios";
 import {
   CheckCircle,
   Filter,
+  PowerOff,
   Search,
   ShieldCheck,
+  Trash2,
   Users,
 } from "lucide-react";
 import { useContext, useState } from "react";
@@ -26,6 +28,44 @@ const STATUS_STYLE: Record<string, string> = {
   SUSPENDED: "bg-red-50 text-red-700",
   REJECTED: "bg-slate-100 text-slate-600",
 };
+
+function useUserMutations(queryClient: ReturnType<typeof useQueryClient>, toastCtx: any) {
+  const mutationOptions = (successMsg: string) => ({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toastCtx?.setToast?.({ error: false, message: successMsg });
+      toastCtx?.setIsVisible(true);
+    },
+    onError: (e: unknown) => {
+      const detail = axios.isAxiosError(e)
+        ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
+        : e instanceof Error ? e.message : "Something went wrong";
+      toastCtx?.setToast?.({ error: true, message: toToastMessage(detail) });
+      toastCtx?.setIsVisible(true);
+    },
+  });
+
+  const { mutate: approve, isPending: isApproving } = useMutation({
+    mutationFn: (userId: string) => approveUser(userId),
+    ...mutationOptions("Customer approved successfully."),
+  });
+
+  const { mutate: deactivate, isPending: isDeactivating } = useMutation({
+    mutationFn: (userId: string) => deactivateUser(userId),
+    ...mutationOptions("Customer deactivated successfully."),
+  });
+
+  const { mutate: remove, isPending: isDeleting } = useMutation({
+    mutationFn: (userId: string) => deleteUser(userId),
+    ...mutationOptions("Customer deleted successfully."),
+  });
+
+  return {
+    approve, isApproving,
+    deactivate, isDeactivating,
+    remove, isDeleting,
+  };
+}
 
 export default function CustomersPage() {
   const [params, setParams] = useState({
@@ -46,34 +86,44 @@ export default function CustomersPage() {
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 1;
 
-  const { mutate: approve, isPending: isApproving } = useMutation({
-    mutationFn: (userId: string) => approveUser(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toastCtx?.setToast?.({ error: false, message: "Customer approved successfully." });
-      toastCtx?.setIsVisible(true);
-    },
-    onError: (e) => {
-      const detail = axios.isAxiosError(e)
-        ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
-        : e instanceof Error ? e.message : "Something went wrong";
-      toastCtx?.setToast?.({ error: true, message: toToastMessage(detail) });
-      toastCtx?.setIsVisible(true);
-    },
-  });
+  const { approve, isApproving, deactivate, isDeactivating, remove, isDeleting } =
+    useUserMutations(queryClient, toastCtx);
+
+  const isMutating = isApproving || isDeactivating || isDeleting;
 
   const handleApprove = (user: User) => {
     dialogCtx.open({
       title: "Approve Customer?",
       description: (
-        <>
-          This will activate <strong>{user.full_name}</strong>'s account so they
-          can start placing orders.
-        </>
+        <>Activate <strong>{user.full_name}</strong>'s account so they can start placing orders.</>
       ),
       confirmLabel: "Yes, Approve",
       tone: "success",
       onConfirm: () => approve(user.id),
+    });
+  };
+
+  const handleDeactivate = (user: User) => {
+    dialogCtx.open({
+      title: "Deactivate Customer?",
+      description: (
+        <>This will deactivate <strong>{user.full_name}</strong>'s account. They won't be able to log in until reactivated.</>
+      ),
+      confirmLabel: "Yes, Deactivate",
+      tone: "danger",
+      onConfirm: () => deactivate(user.id),
+    });
+  };
+
+  const handleDelete = (user: User) => {
+    dialogCtx.open({
+      title: "Delete Customer?",
+      description: (
+        <>Permanently delete <strong>{user.full_name}</strong>'s account. This action cannot be undone.</>
+      ),
+      confirmLabel: "Yes, Delete",
+      tone: "danger",
+      onConfirm: () => remove(user.id),
     });
   };
 
@@ -230,18 +280,41 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
                       {formatDateUTC7(user.created_at)}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      {user.status === "INACTIVE" && (
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        {user.status === "INACTIVE" && (
+                          <button
+                            type="button"
+                            disabled={isMutating}
+                            onClick={() => handleApprove(user)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition disabled:opacity-50"
+                            title="Approve account"
+                          >
+                            <CheckCircle size={13} />
+                            Approve
+                          </button>
+                        )}
+                        {user.status === "ACTIVE" && (
+                          <button
+                            type="button"
+                            disabled={isMutating}
+                            onClick={() => handleDeactivate(user)}
+                            className="p-2 rounded-xl text-amber-500 hover:bg-amber-50 transition disabled:opacity-50"
+                            title="Deactivate account"
+                          >
+                            <PowerOff size={16} />
+                          </button>
+                        )}
                         <button
                           type="button"
-                          disabled={isApproving}
-                          onClick={() => handleApprove(user)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition disabled:opacity-50"
+                          disabled={isMutating}
+                          onClick={() => handleDelete(user)}
+                          className="p-2 rounded-xl text-red-400 hover:bg-red-50 transition disabled:opacity-50"
+                          title="Delete account"
                         >
-                          <CheckCircle size={13} />
-                          Approve
+                          <Trash2 size={16} />
                         </button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
