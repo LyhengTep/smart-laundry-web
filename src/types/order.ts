@@ -96,6 +96,16 @@ export interface UpdateOrderPricingRequest {
   discount: number;
 }
 
+export interface OrderSearchResult {
+  order_no: string;
+  status: OrderStatus;
+  pickup_address: string;
+  delivery_address: string;
+  placed_at: string;
+  updated_at: string;
+  items: LaundryOrderLine[];
+}
+
 export interface CreateOrderItemRequest {
   business_service_id: string;
   quantity: number;
