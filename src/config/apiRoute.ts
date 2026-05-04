@@ -50,6 +50,7 @@ export const API_ROUTES = {
   UPDATE_BUSINESS_STATUS: (businessId: string) => `/businesses/${businessId}/status`,
   UPDATE_SHOP_STATUS: (businessId: string) => `/businesses/${businessId}/shop-status`,
 
+  REGISTER_ADMIN: "/users/admin",
   FETCH_USERS: "/users",
   GET_USER: (userId: string) => `/users/${userId}`,
   UPDATE_USER: (userId: string) => `/users/${userId}`,

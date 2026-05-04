@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Store,
   User,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -93,6 +94,7 @@ export default function AdminLayout({
       <aside
         className={[
           "bg-slate-900 text-white flex flex-col transition-all duration-200",
+          "md:sticky md:top-0 md:h-screen md:overflow-y-auto",
           collapsed ? "md:w-20" : "md:w-64",
           "w-full",
         ].join(" ")}
@@ -125,21 +127,25 @@ export default function AdminLayout({
           )}
           <Link
             href="/admin/customers"
-            className={navItemClass(pathname === "/admin/customers", collapsed)}
+            className={navItemClass(pathname.startsWith("/admin/customers"), collapsed)}
           >
             <User size={collapsed ? 26 : 18} />
             {!collapsed && <span>Customers</span>}
           </Link>
           <Link
             href="/admin/merchants"
-            className={navItemClass(pathname === "/admin/merchants", collapsed)}
+            className={navItemClass(pathname.startsWith("/admin/merchants"), collapsed)}
           >
             <Store size={collapsed ? 26 : 18} />
             {!collapsed && <span>Merchants</span>}
           </Link>
           <Link
             href="/admin/drivers"
-            className={navItemClass(pathname === "/admin/drivers", collapsed)}
+            className={navItemClass(
+              pathname === "/admin/drivers" ||
+              (pathname.startsWith("/admin/drivers") && !pathname.startsWith("/admin/drivers/approval")),
+              collapsed,
+            )}
           >
             <Bike size={collapsed ? 26 : 18} />
             {!collapsed && <span>All Drivers</span>}
@@ -147,7 +153,7 @@ export default function AdminLayout({
           <Link
             href="/admin/drivers/approval"
             className={navItemClass(
-              pathname === "/admin/drivers/approval",
+              pathname.startsWith("/admin/drivers/approval"),
               collapsed,
             )}
           >
@@ -167,10 +173,17 @@ export default function AdminLayout({
           </Link>
           <Link
             href="#"
-            className={navItemClass(pathname === "/admin/orders", collapsed)}
+            className={navItemClass(pathname.startsWith("/admin/orders"), collapsed)}
           >
             <Clock size={collapsed ? 26 : 18} />
             {!collapsed && <span>Order Logs</span>}
+          </Link>
+          <Link
+            href="/admin/admins/new"
+            className={navItemClass(pathname.startsWith("/admin/admins"), collapsed)}
+          >
+            <UserPlus size={collapsed ? 26 : 18} />
+            {!collapsed && <span>Register Admin</span>}
           </Link>
         </nav>
 

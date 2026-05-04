@@ -38,6 +38,16 @@ export interface UserQueryParams {
   size?: number;
 }
 
+export interface AdminRegisterRequest {
+  full_name: string;
+  user_name: string;
+  password: string;
+  email: string;
+  phone: string;
+  msg_token?: string;
+  role: "ADMIN";
+}
+
 export interface UserUpdateRequest {
   full_name: string;
   user_name: string;

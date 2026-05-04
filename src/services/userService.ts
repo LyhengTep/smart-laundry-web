@@ -1,6 +1,6 @@
 import { API_ROUTES } from "@/config/apiRoute";
 import { http } from "@/lib/axios";
-import { User, UserListResponse, UserQueryParams, UserUpdateRequest } from "@/types/user";
+import { AdminRegisterRequest, User, UserListResponse, UserQueryParams, UserUpdateRequest } from "@/types/user";
 
 export const getUsers = async (
   params?: UserQueryParams,
@@ -30,5 +30,10 @@ export const approveUser = async (userId: string): Promise<void> => {
 
 export const deactivateUser = async (userId: string): Promise<void> => {
   await http.patch(API_ROUTES.DEACTIVATE_USER(userId));
+};
+
+export const registerAdmin = async (data: AdminRegisterRequest): Promise<User> => {
+  const res = await http.post<User>(API_ROUTES.REGISTER_ADMIN, data);
+  return res.data;
 };
 
