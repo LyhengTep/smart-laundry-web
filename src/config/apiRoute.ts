@@ -51,6 +51,8 @@ export const API_ROUTES = {
   UPDATE_SHOP_STATUS: (businessId: string) => `/businesses/${businessId}/shop-status`,
 
   REGISTER_ADMIN: "/users/admin",
+  APPROVE_BUSINESS_DEACTIVATION: (id: string) => `/businesses/${id}/approve-deactivation`,
+  REJECT_BUSINESS_DEACTIVATION: (id: string) => `/businesses/${id}/reject-deactivation`,
   FETCH_USERS: "/users",
   GET_USER: (userId: string) => `/users/${userId}`,
   UPDATE_USER: (userId: string) => `/users/${userId}`,

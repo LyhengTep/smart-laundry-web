@@ -14,6 +14,7 @@ export interface Business {
     | "INACTIVE"
     | "SUSPENDED"
     | "REJECTED"
+    | "PENDING_DEACTIVATION"
     | string;
   address: string;
   phone: string;
@@ -84,7 +85,7 @@ export interface BusinessResponse {
   cover_image_url: string;
   rating_avg: number;
   business_license_number: string;
-  status: "PENDING" | "APPROVED" | "OPEN" | "CLOSED" | "SUSPENDED";
+  status: "PENDING" | "APPROVED" | "OPEN" | "CLOSED" | "SUSPENDED" | "PENDING_DEACTIVATION" | string;
   open_time: string;
   close_time: string;
   services?: BusinessServiceItem[];

@@ -2,6 +2,7 @@
 
 import {
   Bike,
+  Building2,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -177,6 +178,13 @@ export default function AdminLayout({
           >
             <Clock size={collapsed ? 26 : 18} />
             {!collapsed && <span>Order Logs</span>}
+          </Link>
+          <Link
+            href="/admin/businesses"
+            className={navItemClass(pathname.startsWith("/admin/businesses"), collapsed)}
+          >
+            <Building2 size={collapsed ? 26 : 18} />
+            {!collapsed && <span>Deactivation Requests</span>}
           </Link>
           <Link
             href="/admin/admins/new"
