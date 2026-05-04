@@ -1,11 +1,9 @@
 "use client";
 
+import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { useBusiness } from "@/hooks/businesses/businessHook";
-import {
-  approveBusinessDeactivation,
-  rejectBusinessDeactivation,
-} from "@/services/businessService";
+import { handleBusinessDeactivation } from "@/services/businessService";
 import { toToastMessage } from "@/utils/toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -20,8 +18,7 @@ import {
   Star,
   XCircle,
 } from "lucide-react";
-import { use } from "react";
-import { useContext } from "react";
+import { use, useContext } from "react";
 import { useRouter } from "next/navigation";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -55,16 +52,20 @@ export default function AdminBusinessDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const toastCtx = useContext(ToastContext);
+  const dialogCtx = useContext(DialogCtx);
   const queryClient = useQueryClient();
 
   const { data: biz, isLoading, isError } = useBusiness(id);
 
-  const approve = useMutation({
-    mutationFn: () => approveBusinessDeactivation(id),
-    onSuccess: () => {
+  const { mutate, isPending } = useMutation({
+    mutationFn: (action: "APPROVE" | "REJECT") => handleBusinessDeactivation(id, action),
+    onSuccess: (_, action) => {
       queryClient.invalidateQueries({ queryKey: ["businesses"] });
       queryClient.invalidateQueries({ queryKey: ["business", id] });
-      toastCtx?.setToast?.({ error: false, message: "Deactivation approved." });
+      toastCtx?.setToast?.({
+        error: false,
+        message: action === "APPROVE" ? "Deactivation approved." : "Deactivation rejected.",
+      });
       toastCtx?.setIsVisible(true);
       router.push("/admin/businesses");
     },
@@ -77,25 +78,18 @@ export default function AdminBusinessDetailPage({
     },
   });
 
-  const reject = useMutation({
-    mutationFn: () => rejectBusinessDeactivation(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["businesses"] });
-      queryClient.invalidateQueries({ queryKey: ["business", id] });
-      toastCtx?.setToast?.({ error: false, message: "Deactivation rejected." });
-      toastCtx?.setIsVisible(true);
-      router.push("/admin/businesses");
-    },
-    onError: (e) => {
-      const detail = axios.isAxiosError(e)
-        ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
-        : e instanceof Error ? e.message : "Something went wrong";
-      toastCtx?.setToast?.({ error: true, message: toToastMessage(detail) });
-      toastCtx?.setIsVisible(true);
-    },
-  });
-
-  const isMutating = approve.isPending || reject.isPending;
+  const confirmAction = (action: "APPROVE" | "REJECT") => {
+    dialogCtx.open({
+      title: action === "APPROVE" ? "Approve deactivation?" : "Reject deactivation?",
+      description:
+        action === "APPROVE"
+          ? `"${biz?.name}" will be deactivated. This cannot be undone.`
+          : `"${biz?.name}"'s deactivation request will be rejected and it will remain active.`,
+      confirmLabel: action === "APPROVE" ? "Yes, Approve" : "Yes, Reject",
+      tone: action === "REJECT" ? "danger" : undefined,
+      onConfirm: () => mutate(action),
+    });
+  };
 
   if (isLoading) {
     return (
@@ -132,11 +126,7 @@ export default function AdminBusinessDetailPage({
       {/* Cover + profile */}
       <div className="relative bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
         {biz.cover_image_url ? (
-          <img
-            src={biz.cover_image_url}
-            alt="cover"
-            className="w-full h-40 object-cover"
-          />
+          <img src={biz.cover_image_url} alt="cover" className="w-full h-40 object-cover" />
         ) : (
           <div className="w-full h-40 bg-gradient-to-br from-slate-100 to-slate-200" />
         )}
@@ -185,11 +175,11 @@ export default function AdminBusinessDetailPage({
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              disabled={isMutating}
-              onClick={() => approve.mutate()}
+              disabled={isPending}
+              onClick={() => confirmAction("APPROVE")}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-green-600 hover:bg-green-500 text-white text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              {approve.isPending ? (
+              {isPending ? (
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
                 <CheckCircle size={15} />
@@ -198,11 +188,11 @@ export default function AdminBusinessDetailPage({
             </button>
             <button
               type="button"
-              disabled={isMutating}
-              onClick={() => reject.mutate()}
+              disabled={isPending}
+              onClick={() => confirmAction("REJECT")}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-red-500 hover:bg-red-400 text-white text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              {reject.isPending ? (
+              {isPending ? (
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
                 <XCircle size={15} />
@@ -215,30 +205,20 @@ export default function AdminBusinessDetailPage({
 
       {/* Details */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {/* Business info */}
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
             Business Info
           </p>
           <InfoRow icon={<MapPin size={15} />} label="Address" value={biz.address} />
           <InfoRow icon={<Phone size={15} />} label="Phone" value={biz.phone} />
-          <InfoRow
-            icon={<ScrollText size={15} />}
-            label="License No."
-            value={biz.business_license_number}
-          />
+          <InfoRow icon={<ScrollText size={15} />} label="License No." value={biz.business_license_number} />
           <InfoRow
             icon={<Clock size={15} />}
             label="Hours"
-            value={
-              biz.open_time && biz.close_time
-                ? `${biz.open_time} – ${biz.close_time}`
-                : "—"
-            }
+            value={biz.open_time && biz.close_time ? `${biz.open_time} – ${biz.close_time}` : "—"}
           />
         </div>
 
-        {/* Services */}
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
             Services ({biz.services?.length ?? 0})
@@ -260,9 +240,7 @@ export default function AdminBusinessDetailPage({
                       {svc.pricing_type.replaceAll("_", " ")}
                     </p>
                   </div>
-                  <p className="text-sm font-black text-slate-900">
-                    ${svc.base_price.toFixed(2)}
-                  </p>
+                  <p className="text-sm font-black text-slate-900">${svc.base_price.toFixed(2)}</p>
                 </div>
               ))}
             </div>

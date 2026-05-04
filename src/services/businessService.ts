@@ -147,12 +147,11 @@ export const updateBusinessReview = async (
   return res.data;
 };
 
-export const approveBusinessDeactivation = async (id: string): Promise<void> => {
-  await http.patch(API_ROUTES.APPROVE_BUSINESS_DEACTIVATION(id));
-};
-
-export const rejectBusinessDeactivation = async (id: string): Promise<void> => {
-  await http.patch(API_ROUTES.REJECT_BUSINESS_DEACTIVATION(id));
+export const handleBusinessDeactivation = async (
+  id: string,
+  action: "APPROVE" | "REJECT",
+): Promise<void> => {
+  await http.patch(API_ROUTES.BUSINESS_DEACTIVATION(id), { action });
 };
 
 export const updateBusiness = async (
