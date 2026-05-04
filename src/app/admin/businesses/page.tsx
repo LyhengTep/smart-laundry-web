@@ -3,7 +3,7 @@
 import { ListingPagination } from "@/components/ListingPagination";
 import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
-import { useBusinesses } from "@/hooks/businesses/businessHook";
+import { useMyBusinesses } from "@/hooks/businesses/businessHook";
 import { handleBusinessDeactivation } from "@/services/businessService";
 import { Business } from "@/types/business";
 import { toToastMessage } from "@/utils/toast";
@@ -45,11 +45,7 @@ export default function AdminBusinessesPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useBusinesses({
-    status: "PENDING_DEACTIVATION",
-    page,
-    size: 15,
-  });
+  const { data, isLoading } = useMyBusinesses({ page, size: 15 });
 
   const businesses: Business[] = data?.items ?? [];
 
@@ -57,7 +53,7 @@ export default function AdminBusinessesPage() {
     mutationFn: ({ id, action }: { id: string; action: "APPROVE" | "REJECT" }) =>
       handleBusinessDeactivation(id, action),
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["businesses"] });
+      queryClient.invalidateQueries({ queryKey: ["my-businesses"] });
       toastCtx?.setToast?.({
         error: false,
         message: vars.action === "APPROVE" ? "Deactivation approved." : "Deactivation rejected.",
