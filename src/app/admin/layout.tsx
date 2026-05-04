@@ -172,7 +172,7 @@ export default function AdminLayout({
             )}
           </Link>
           <Link
-            href="#"
+            href="/admin/orders"
             className={navItemClass(pathname.startsWith("/admin/orders"), collapsed)}
           >
             <Clock size={collapsed ? 26 : 18} />
