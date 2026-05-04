@@ -25,7 +25,7 @@ const MultiShopManager = () => {
     queryKey: ["my-businesses", page],
     queryFn: () => getMyBusinesses({ page, size: PAGE_SIZE }),
   });
-
+  console.log("data after fetched ====>", data);
   const removeBusinessMutation = useMutation({
     mutationFn: (id: string) => deleteBusiness(id),
     onSuccess: async () => {
@@ -33,7 +33,10 @@ const MultiShopManager = () => {
         queryKey: ["my-businesses"],
         refetchType: "active",
       });
-      toastCtx?.setToast?.({ error: false, message: "Shop removed successfully." });
+      toastCtx?.setToast?.({
+        error: false,
+        message: "Shop removed successfully.",
+      });
       toastCtx?.setIsVisible(true);
     },
     onError: () => {
@@ -51,7 +54,8 @@ const MultiShopManager = () => {
       title: "Remove this shop?",
       description: (
         <>
-          This will remove <strong>{shop.name}</strong>. This action cannot be undone.
+          This will remove <strong>{shop.name}</strong>. This action cannot be
+          undone.
         </>
       ),
       confirmLabel: "Yes, Remove",
