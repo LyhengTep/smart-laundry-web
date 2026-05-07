@@ -59,12 +59,21 @@ export default function DriverHistoryTab({ driverId }: DriverHistoryTabProps) {
             <Wallet size={24} />
           </div>
         </div>
-        <button
-          type="button"
-          className="w-full mt-8 py-4 bg-white text-slate-900 font-black rounded-2xl shadow-lg"
-        >
-          Withdraw Funds
-        </button>
+        <div className="mt-8 rounded-2xl border border-slate-700/60 bg-slate-800/50 px-5 py-4 flex items-start gap-3">
+          <div className="mt-0.5 shrink-0 w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400">
+            <Wallet size={16} />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-200 leading-snug">
+              Online withdrawals are not available at this time.
+            </p>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              To withdraw your funds, please visit our office in person with a
+              valid ID. Our team will be happy to assist you during business
+              hours.
+            </p>
+          </div>
+        </div>
       </div>
 
 <div className="space-y-4">
