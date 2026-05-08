@@ -17,7 +17,6 @@ export const createDeviceToken = async (payload: DeviceTokenPayload) => {
 };
 
 export const registerDeviceToken = async (payload: DeviceTokenPayload) => {
-  console.log("Registering device token with payload:", payload);
   const res = await http.post<DeviceToken>(
     API_ROUTES.REGISTER_DEVICE_TOKEN,
     payload,
@@ -48,7 +47,7 @@ export const updateDeviceToken = async (
   return res.data;
 };
 
-export const getDeviceTokensByUserId = async (userId: number) => {
+export const getDeviceTokensByUserId = async (userId: string) => {
   const res = await http.get<DeviceTokenListResponse>(
     API_ROUTES.DEVICE_TOKENS_BY_USER(userId),
   );
@@ -56,7 +55,7 @@ export const getDeviceTokensByUserId = async (userId: number) => {
   return res.data;
 };
 
-export const getDeviceTokensByDriverId = async (driverId: number) => {
+export const getDeviceTokensByDriverId = async (driverId: string) => {
   const res = await http.get<DeviceTokenListResponse>(
     API_ROUTES.DEVICE_TOKENS_BY_DRIVER(driverId),
   );

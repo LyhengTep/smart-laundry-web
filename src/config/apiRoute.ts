@@ -34,9 +34,9 @@ export const API_ROUTES = {
   DEVICE_TOKENS: "/device-tokens",
   REGISTER_DEVICE_TOKEN: "/device-tokens/register",
   DEVICE_TOKEN: (id: number) => `/device-tokens/${id}`,
-  DEVICE_TOKENS_BY_USER: (user_id: number) =>
+  DEVICE_TOKENS_BY_USER: (user_id: string) =>
     `/device-tokens/by-user/${user_id}`,
-  DEVICE_TOKENS_BY_DRIVER: (driver_id: number) =>
+  DEVICE_TOKENS_BY_DRIVER: (driver_id: string) =>
     `/device-tokens/by-driver/${driver_id}`,
 
   GET_BUSINESS_REVIEWS: (businessId: string) => `/businesses/${businessId}/reviews`,
