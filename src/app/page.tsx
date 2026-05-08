@@ -61,7 +61,9 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
-  const [searchResult, setSearchResult] = useState<OrderSearchResult | null>(null);
+  const [searchResult, setSearchResult] = useState<OrderSearchResult | null>(
+    null,
+  );
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -74,8 +76,12 @@ export default function Home() {
     const registerToken = async () => {
       try {
         const permission = await requestFirebaseNotificationPermission();
+
+        console.log("Notification permission result:", permission);
         if (permission !== "granted") return;
         const token = await getFcmToken();
+
+        console.log("Obtained FCM token:", token);
         if (!token) return;
         const ua = navigator.userAgent.toLowerCase();
         const device_type = /iphone|ipad|ipod/.test(ua)
@@ -83,12 +89,13 @@ export default function Home() {
           : /android/.test(ua)
             ? "android"
             : "web";
-        await registerDeviceToken({
+        let res = await registerDeviceToken({
           user_id: value.id,
           driver_id: null,
           token,
           device_type,
         });
+        console.log("Device token registered:", res);
       } catch (e) {
         console.error("Failed to register device token:", e);
       }
@@ -115,9 +122,18 @@ export default function Home() {
     try {
       const result = await searchOrderByNo(trimmed);
       setSearchResult(result);
-      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+      setTimeout(
+        () =>
+          resultRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          }),
+        100,
+      );
     } catch {
-      setSearchError("Order not found. Please check the order number and try again.");
+      setSearchError(
+        "Order not found. Please check the order number and try again.",
+      );
     } finally {
       setIsSearching(false);
     }

@@ -32,7 +32,7 @@ export default function FirebaseNotificationInit() {
 
   useEffect(() => {
     let unsubscribe: null | (() => void) = null;
-
+    console.log("Initializing Firebase notifications for user", authUser);
     const setup = async () => {
       try {
         // Always request permission — works for both guest and logged-in users.
@@ -49,7 +49,9 @@ export default function FirebaseNotificationInit() {
             await registerDeviceToken({
               user_id: authUser.id,
               driver_id:
-                authUser.role === "DRIVER" ? (authUser.driver?.id ?? null) : null,
+                authUser.role === "DRIVER"
+                  ? (authUser.driver?.id ?? null)
+                  : null,
               token,
               device_type: detectDeviceType(),
             });

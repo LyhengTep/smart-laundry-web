@@ -17,6 +17,7 @@ export const registerFirebaseServiceWorker = async () => {
 };
 
 export const requestFirebaseNotificationPermission = async () => {
+  console.log("Requesting notification permission");
   if (typeof window === "undefined" || !("Notification" in window))
     return "denied";
   if (Notification.permission === "granted") return "granted";
