@@ -2,8 +2,8 @@ export const API_ROUTES = {
   REGISTER_USER: "/auths/signup",
   LOGIN: "/auths/login",
   LOGOUT: "/auths/logout",
-  UPDATE_USER_MSG_TOKEN: (user_id: string) => `/users/${user_id}/msg-token`,
   FETCH_BUSINESSES: "/businesses/",
+  FETCH_MY_BUSINESSES: "/businesses/mine",
   GET_BUSINESS: (id: string) => `/businesses/${id}`,
   UPDATE_BUSINESS: (id: string) => `/businesses/${id}`,
   FETCH_LAUNDRY_SERVICES: "/laundry-services/",
@@ -24,12 +24,40 @@ export const API_ROUTES = {
 
   ACCEPT_DRIVER_TASK: (taskId: string) =>
     `/drivers/assignments/${taskId}/accept`,
+  MARK_ASSIGNMENT_PICKED_UP: (assignmentId: string) =>
+    `/drivers/assignments/${assignmentId}/picked-up`,
+  MARK_ASSIGNMENT_DELIVERED: (assignmentId: string) =>
+    `/drivers/assignments/${assignmentId}/delivered`,
+  CONFIRM_PAYMENT: (paymentId: string) => `/payments/${paymentId}/confirm`,
 
   DRIVER_ASSIGNEMNTS: "/drivers/assignments/",
   DEVICE_TOKENS: "/device-tokens",
   REGISTER_DEVICE_TOKEN: "/device-tokens/register",
   DEVICE_TOKEN: (id: number) => `/device-tokens/${id}`,
-  DEVICE_TOKENS_BY_USER: (user_id: number) => `/device-tokens/by-user/${user_id}`,
+  DEVICE_TOKENS_BY_USER: (user_id: number) =>
+    `/device-tokens/by-user/${user_id}`,
   DEVICE_TOKENS_BY_DRIVER: (driver_id: number) =>
     `/device-tokens/by-driver/${driver_id}`,
+
+  GET_BUSINESS_REVIEWS: (businessId: string) => `/businesses/${businessId}/reviews`,
+  GET_BUSINESS_REVIEW_SUMMARY: (businessId: string) => `/businesses/${businessId}/reviews/summary`,
+  CREATE_BUSINESS_REVIEW: (businessId: string) => `/businesses/${businessId}/reviews`,
+  UPDATE_BUSINESS_REVIEW: (businessId: string, reviewId: string) =>
+    `/businesses/${businessId}/reviews/${reviewId}`,
+  GET_ACTIVE_ASSIGNMENT: "/drivers/pending/get-current-assignment",
+  GET_DRIVER_REVENUE: "/drivers/me/revenue",
+  GET_BUSINESS_REVENUE: (businessId: string) => `/businesses/${businessId}/revenue`,
+  UPDATE_BUSINESS_STATUS: (businessId: string) => `/businesses/${businessId}/status`,
+  UPDATE_SHOP_STATUS: (businessId: string) => `/businesses/${businessId}/shop-status`,
+
+  REGISTER_ADMIN: "/users/admin",
+  BUSINESS_DEACTIVATION: (id: string) => `/businesses/${id}/deactivation`,
+  FETCH_USERS: "/users",
+  GET_USER: (userId: string) => `/users/${userId}`,
+  UPDATE_USER: (userId: string) => `/users/${userId}`,
+  APPROVE_USER: (userId: string) => `/users/${userId}/approve`,
+  DEACTIVATE_USER: (userId: string) => `/users/${userId}/deactivate`,
+  SEARCH_ORDER: "/orders/search",
+  FETCH_MY_NOTIFICATIONS: "/notifications/mine",
+  MARK_NOTIFICATION_READ: (notificationId: string) => `/notifications/${notificationId}/read`,
 };

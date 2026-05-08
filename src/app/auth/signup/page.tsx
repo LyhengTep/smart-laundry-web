@@ -33,8 +33,8 @@ import {
   Wind,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useContext, useEffect, useState } from "react";
 import {
   FieldErrors,
   SubmitHandler,
@@ -91,10 +91,11 @@ const roles: Record<string, RoleSelectorValues> = {
   },
 };
 
-export default function SignupPage() {
+function SignupPageContent() {
   const toastCtx = useContext(ToastContext);
   const [userType, setUserType] = useState<RoleKeys>("CUSTOMER");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(true);
   const {
@@ -121,7 +122,7 @@ export default function SignupPage() {
     onError: (e) => {
       console.log("Error from service", e);
       const message = axios.isAxiosError(e)
-        ? ((e.response?.data as any)?.detail ?? e.message)
+        ? ((e.response?.data as { detail?: unknown })?.detail ?? e.message)
         : e instanceof Error
           ? e.message
           : "Something went wrong";
@@ -136,6 +137,18 @@ export default function SignupPage() {
       // toastCtx.setIsVisible(false);
     },
   });
+
+  useEffect(() => {
+    const roleQuery = (searchParams.get("role") || "").toUpperCase();
+    if (
+      (roleQuery === "CUSTOMER" ||
+        roleQuery === "MERCHANT" ||
+        roleQuery === "DRIVER") &&
+      roleQuery !== userType
+    ) {
+      setUserType(roleQuery as RoleKeys);
+    }
+  }, [searchParams, userType]);
 
   useEffect(() => {
     setEmpty(setValue);
@@ -153,7 +166,7 @@ export default function SignupPage() {
       "vehicleColor",
     ]);
     setValue("role", userType);
-  }, [userType]);
+  }, [clearErrors, setValue, userType]);
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);
 
@@ -514,5 +527,13 @@ export default function SignupPage() {
       {/* {isLoading && } */}
       {/* <Loading /> */}
     </>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SignupPageContent />
+    </Suspense>
   );
 }

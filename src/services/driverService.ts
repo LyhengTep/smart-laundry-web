@@ -36,6 +36,11 @@ export const getDriverByUserId = async (userId: string) => {
   return res?.data?.data ?? res?.data;
 };
 
+export const getDriverActiveAssignment = async () => {
+  const res = await http.get(API_ROUTES.GET_ACTIVE_ASSIGNMENT);
+  return res?.data?.data ?? res?.data;
+};
+
 export const updateDriver = async (
   driverId: string,
   payload: {
@@ -63,4 +68,13 @@ export const suspendDriver = async (driverId: string) => {
   const res = await http.patch(API_ROUTES.SUSPEND_DRIVER(driverId));
 
   return res?.data;
+};
+
+export const getDriverRevenue = async (): Promise<{
+  driver_id: string;
+  total_revenue: string;
+  currency: string;
+}> => {
+  const res = await http.get(API_ROUTES.GET_DRIVER_REVENUE);
+  return res?.data?.data ?? res?.data;
 };

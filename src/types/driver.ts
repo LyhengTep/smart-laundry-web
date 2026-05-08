@@ -34,4 +34,5 @@ export type DriverParams = {
   page: number;
   size: number;
   status?: string;
+  user_name?: string;
 };

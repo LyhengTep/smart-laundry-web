@@ -1,7 +1,5 @@
 "use client";
 
-import { API_ROUTES } from "@/config/apiRoute";
-import { http } from "@/lib/axios";
 import {
   buildFirebaseSwUrl,
   getFirebaseMessaging,
@@ -39,16 +37,6 @@ export const getFcmToken = async () => {
     vapidKey,
     serviceWorkerRegistration: registration,
   });
-};
-
-export const registerFcmTokenForUser = async (
-  userId: string,
-  msgToken: string,
-) => {
-  const res = await http.patch(API_ROUTES.UPDATE_USER_MSG_TOKEN(userId), {
-    msg_token: msgToken,
-  });
-  return res.data;
 };
 
 export const subscribeForegroundMessages = async (

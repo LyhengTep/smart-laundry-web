@@ -31,63 +31,62 @@ export function OrdersTable({
 }: OrdersTableProps) {
   return (
     <section className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
-      <div className="border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6 mx-4 my-7">
-        <div className="w-full md:w-auto">
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-            {activeSection === "orders" ? "Live queue" : "Past records"}
-          </p>
-          <h3 className="text-xl font-black text-slate-900">
-            {activeSection === "orders" ? "Current Orders" : "Order History"}
-          </h3>
-        </div>
-        <div className="relative w-full md:w-96">
-          <Search
-            className="absolute left-4 top-3.5 text-slate-400"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder={
-              searchField === "customer_id"
-                ? "Search by customer ID..."
-                : searchField === "business_id"
-                  ? "Search by business ID..."
-                  : "Search by order no..."
-            }
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-blue-600 outline-none"
-          />
-        </div>
-        <div className="flex gap-3">
-          <div className="flex items-center gap-2 px-4 py-2.5 font-bold text-slate-600 bg-slate-50 rounded-2xl">
-            <Search size={16} />
-            <select
-              value={searchField}
-              onChange={(e) =>
-                onSearchFieldChange(e.target.value as SearchField)
-              }
-              className="bg-transparent text-sm font-bold outline-none"
-            >
-              <option value="order_no">Order No</option>
-              <option value="customer_id">Customer ID</option>
-              <option value="business_id">Business ID</option>
-            </select>
+      <div className="border-b border-slate-50 flex flex-col gap-4 mx-4 my-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+              {activeSection === "orders" ? "Live queue" : "Past records"}
+            </p>
+            <h3 className="text-xl font-black text-slate-900">
+              {activeSection === "orders" ? "Current Orders" : "Order History"}
+            </h3>
           </div>
-          <div className="flex items-center gap-2 py-2.5 font-bold text-slate-600 bg-slate-50 rounded-2xl">
-            <Filter size={18} />
-            <select
-              value={statusFilter}
-              onChange={(e) => onStatusFilterChange(e.target.value)}
-              className="bg-transparent text-sm font-bold outline-none"
-            >
-              <option value="">All Status</option>
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {status.replaceAll("_", " ")}
-                </option>
-              ))}
-            </select>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-3.5 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder={
+                searchField === "customer_id"
+                  ? "Search by customer ID..."
+                  : searchField === "business_id"
+                    ? "Search by business ID..."
+                    : "Search by order no..."
+              }
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-blue-600 outline-none"
+            />
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 px-3 py-2.5 font-bold text-slate-600 bg-slate-50 rounded-2xl min-w-0">
+              <Search size={14} className="shrink-0" />
+              <select
+                value={searchField}
+                onChange={(e) => onSearchFieldChange(e.target.value as SearchField)}
+                className="bg-transparent text-sm font-bold outline-none min-w-0 max-w-[100px] sm:max-w-none"
+              >
+                <option value="order_no">Order No</option>
+                <option value="customer_id">Customer</option>
+                <option value="business_id">Business</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-2.5 font-bold text-slate-600 bg-slate-50 rounded-2xl min-w-0">
+              <Filter size={14} className="shrink-0" />
+              <select
+                value={statusFilter}
+                onChange={(e) => onStatusFilterChange(e.target.value)}
+                className="bg-transparent text-sm font-bold outline-none min-w-0 max-w-[90px] sm:max-w-none"
+              >
+                <option value="">All</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>

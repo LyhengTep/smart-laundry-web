@@ -122,6 +122,17 @@ const CustomerOrderPage = () => {
     STORAGE_KEYS.AUTH_USER,
     null,
   );
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    if (authChecked) return;
+    if (!authUser?.id) {
+      const redirectTo = encodeURIComponent(`/businesses/${businessId}/order`);
+      router.replace(`/auth/login?redirect=${redirectTo}`);
+      return;
+    }
+    setAuthChecked(true);
+  }, [authChecked, authUser?.id, businessId, router]);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
   const { isLoaded: isMapLoaded } = useJsApiLoader({
@@ -419,6 +430,14 @@ const CustomerOrderPage = () => {
     );
   }
 
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8 text-slate-500 dark:text-slate-400">
+        Redirecting to login...
+      </div>
+    );
+  }
+
   return (
     <>
       <form
@@ -595,7 +614,7 @@ const CustomerOrderPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">
-                <div className="space-y-2">
+                <div className="px-0 md:px-2 flex flex-col justify-evenly">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2">
                     Pickup Time
                   </label>
@@ -616,7 +635,7 @@ const CustomerOrderPage = () => {
                     </p>
                   )}
                 </div>
-                <div className="space-y-2 min-w-0">
+                <div className="px-0 md:px-2 flex flex-col justify-evenly">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2">
                     Expected Drop-off
                   </label>
@@ -625,6 +644,7 @@ const CustomerOrderPage = () => {
                       className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400"
                       size={16}
                     />
+
                     <input
                       type="datetime-local"
                       {...register("scheduledDropoffAt")}
@@ -699,7 +719,7 @@ const CustomerOrderPage = () => {
             <button
               type="submit"
               disabled={selectedCount === 0 || createOrderMutation.isPending}
-              className="flex-1 bg-blue-600 text-white font-black text-lg py-4 rounded-[1.8rem] shadow-xl shadow-blue-200 hover:bg-blue-700 disabled:bg-slate-200 disabled:shadow-none transition-all flex items-center justify-center gap-3"
+              className="flex-1 bg-blue-600 text-white font-black text-xs md:text-lg py-4 rounded-[1.8rem] shadow-xl shadow-blue-200 hover:bg-blue-700 disabled:bg-slate-200 disabled:shadow-none transition-all flex items-center justify-center gap-3"
             >
               {createOrderMutation.isPending
                 ? "Placing..."

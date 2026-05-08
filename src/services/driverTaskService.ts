@@ -1,7 +1,7 @@
 import { API_ROUTES } from "@/config/apiRoute";
 import { http } from "@/lib/axios";
-import { DriverStats, DriverTask, DriverTaskRequest } from "@/types/driverTask";
-
+import { DriverStats, DriverTaskRequest } from "@/types/driverTask";
+import qs from "qs";
 export const getDriverTaskWsUrl = (driver_id?: string) => {
   const socketPath = driver_id
     ? `/api/v1/ws/assignment/${driver_id}`
@@ -39,10 +39,57 @@ export const getDriverTasks = async (driverId: string) => {
   const res = await http.get(API_ROUTES.DRIVER_ASSIGNEMNTS, {
     params: {
       driver_id: driverId,
+      status_not_in: ["DELIVERED", "REJECTED"],
     },
+    paramsSerializer: (params) =>
+      qs.stringify(params, { arrayFormat: "repeat" }),
   });
 
   return res?.data;
+};
+
+export const getDriverHistories = async (
+  driverId: string,
+  page = 1,
+  size = 5,
+) => {
+  const res = await http.get(API_ROUTES.DRIVER_ASSIGNEMNTS, {
+    params: {
+      driver_id: driverId,
+      status_not_in: ["ACCEPTED", "PICKED_UP"],
+      page,
+      size,
+    },
+    paramsSerializer: (params) =>
+      qs.stringify(params, { arrayFormat: "repeat" }),
+  });
+
+  return res?.data;
+};
+
+export const markAssignmentPickedUp = async (
+  assignmentId: string,
+  deliveryFeePaidBy: "CUSTOMER" | "SHOP",
+) => {
+  const response = await http.patch(
+    API_ROUTES.MARK_ASSIGNMENT_PICKED_UP(assignmentId),
+    { delivery_fee_paid_by: deliveryFeePaidBy },
+  );
+  return response.data;
+};
+
+export const markAssignmentDelivered = async (assignmentId: string) => {
+  const response = await http.patch(
+    API_ROUTES.MARK_ASSIGNMENT_DELIVERED(assignmentId),
+  );
+  return response.data;
+};
+
+export const confirmPaymentByDriver = async (paymentId: string) => {
+  const response = await http.post(API_ROUTES.CONFIRM_PAYMENT(paymentId), {
+    confirmed_by: "DRIVER",
+  });
+  return response.data;
 };
 export const DEFAULT_DRIVER_REQUEST: DriverTaskRequest = {
   id: "REQ-8821",
@@ -52,9 +99,11 @@ export const DEFAULT_DRIVER_REQUEST: DriverTaskRequest = {
   shopName: "Bubbles & Suds",
   distance: "0.8 km",
   payout: 4.5,
+  status: "ACCEPTED",
+  cost: 1,
 };
 
-export const DEFAULT_ACTIVE_DRIVER_TASKS: DriverTask[] = [
+export const DEFAULT_ACTIVE_DRIVER_TASKS: DriverTaskRequest[] = [
   {
     id: "TSK-102",
     customerName: "Maria G.",
@@ -62,8 +111,9 @@ export const DEFAULT_ACTIVE_DRIVER_TASKS: DriverTask[] = [
     address: "Faculty Housing, Apt 9",
     shopName: "Bubbles & Suds",
     distance: "1.2 km",
-    status: "IN_PROGRESS",
+    status: "ACCEPTED",
     payout: 5.2,
+    cost: 1,
   },
 ];
 

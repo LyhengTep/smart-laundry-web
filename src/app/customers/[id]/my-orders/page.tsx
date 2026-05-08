@@ -1,5 +1,8 @@
 "use client";
 
+import CustomerOrderCard, {
+  CustomerOrderTab,
+} from "@/components/customers/orders/CustomerOrderCard";
 import { DialogCtx } from "@/contexts/DialogProvider";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { STORAGE_KEYS } from "@/config/common";
@@ -13,20 +16,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
   ArrowLeft,
-  CheckCircle2,
-  ChevronRight,
-  CreditCard,
   History,
-  Package,
-  RotateCcw,
   ShoppingBag,
-  XCircle,
   Zap,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useContext, useEffect, useMemo, useState } from "react";
-
-type OrderTab = "active" | "history";
 
 const HISTORY_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
 const CANCELLABLE_STATUSES = new Set([
@@ -35,44 +30,6 @@ const CANCELLABLE_STATUSES = new Set([
   "PICKUP_ASSIGNED",
   "OUT_FOR_PICKUP",
 ]);
-
-const formatMoney = (value?: number) => {
-  if (typeof value !== "number") return "Pending weight...";
-  return `$${value.toFixed(2)}`;
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const formatTime = (value?: string | null) => {
-  if (!value) return "Pending";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Pending";
-  return date.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const isPendingPrice = (order: LaundryOrder) => {
-  return (
-    order.status === "PENDING" ||
-    (typeof order.total === "number" && order.total === 0)
-  );
-};
-
-const mapStatusLabel = (status: string) => {
-  if (status === "DELIVERED") return "DONE";
-  return status;
-};
 
 export default function MyOrdersPage() {
   const router = useRouter();
@@ -85,7 +42,7 @@ export default function MyOrdersPage() {
   );
   const params = useParams<{ id: string }>();
   const customerId = String(params.id || "");
-  const [activeTab, setActiveTab] = useState<OrderTab>("active");
+  const [activeTab, setActiveTab] = useState<CustomerOrderTab>("active");
 
   useEffect(() => {
     if (!authUser) {
@@ -232,122 +189,21 @@ export default function MyOrdersPage() {
 
         {!isLoading && !isError && (
           <div className="space-y-4">
-            {displayOrders.map((order) => {
-              const services = (order.items || []).map((item) => item.service_name);
-              const pendingPrice = isPendingPrice(order);
-              const needsPayment = !pendingPrice && order.status === "READY_FOR_DELIVERY";
-              const effectiveDate =
-                activeTab === "history"
-                  ? formatDate(order.updated_at || order.created_at)
-                  : null;
-
-              return (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden group hover:border-blue-100 transition-all"
-                >
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex gap-4">
-                        <div
-                          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
-                            activeTab === "history"
-                              ? "bg-slate-100 text-slate-400"
-                              : "bg-blue-50 text-blue-600"
-                          }`}
-                        >
-                          <Package size={24} />
-                        </div>
-                        <div>
-                          <h2 className="font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">
-                            {order.order_no}
-                          </h2>
-                          <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <span>{`SHOP ${order.business_id.slice(0, 8)}`}</span>
-                            {activeTab === "history" && <span>• {effectiveDate}</span>}
-                          </div>
-                        </div>
-                      </div>
-                      <StatusPill status={order.status} />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {services.length > 0 ? (
-                        services.map((service, i) => (
-                          <span
-                            key={`${order.id}-${service}-${i}`}
-                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${
-                              activeTab === "history"
-                                ? "bg-slate-50 text-slate-400 border border-slate-100"
-                                : "bg-blue-50 text-blue-600"
-                            }`}
-                          >
-                            {service}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight bg-slate-50 text-slate-400 border border-slate-100">
-                          No services
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-5 border-t border-slate-50">
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                          Amount
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                          <p
-                            className={`text-xl font-black ${pendingPrice ? "text-slate-300 italic text-sm" : "text-slate-900"}`}
-                          >
-                            {pendingPrice ? "Pending weight..." : formatMoney(order.total)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {activeTab === "active" ? (
-                        needsPayment ? (
-                          <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95">
-                            <CreditCard size={16} /> Pay Now
-                          </button>
-                        ) : CANCELLABLE_STATUSES.has(
-                            (order.status || "").toUpperCase(),
-                          ) ? (
-                          <button
-                            type="button"
-                            onClick={() => handleCancelOrder(order)}
-                            disabled={
-                              cancelOrderMutation.isPending &&
-                              cancelOrderMutation.variables === order.id
-                            }
-                            className="flex items-center gap-2 px-5 py-3 bg-red-50 text-red-600 font-black text-xs rounded-2xl hover:bg-red-100 disabled:opacity-60 transition-all"
-                          >
-                            <XCircle size={14} />
-                            {cancelOrderMutation.isPending &&
-                            cancelOrderMutation.variables === order.id
-                              ? "Cancelling..."
-                              : "Cancel Order"}
-                          </button>
-                        ) : (
-                          <div className="flex items-center gap-2 text-slate-400 text-xs font-bold bg-slate-50 px-3 py-2 rounded-xl">
-                            {formatTime(order.updated_at)} <ChevronRight size={14} />
-                          </div>
-                        )
-                      ) : (
-                        <button className="flex items-center gap-2 px-5 py-3 bg-slate-100 text-slate-600 font-black text-xs rounded-2xl hover:bg-blue-600 hover:text-white transition-all group/btn">
-                          <RotateCcw
-                            size={14}
-                            className="group-hover/btn:rotate-[-45deg] transition-transform"
-                          />
-                          Reorder
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {displayOrders.map((order) => (
+              <CustomerOrderCard
+                key={order.id}
+                order={order}
+                activeTab={activeTab}
+                canCancel={CANCELLABLE_STATUSES.has(
+                  (order.status || "").toUpperCase(),
+                )}
+                isCancelling={
+                  cancelOrderMutation.isPending &&
+                  cancelOrderMutation.variables === order.id
+                }
+                onCancel={handleCancelOrder}
+              />
+            ))}
 
             {displayOrders.length === 0 && (
               <div className="text-center py-20">
@@ -363,38 +219,3 @@ export default function MyOrdersPage() {
     </div>
   );
 }
-
-const StatusPill = ({ status }: { status: string }) => {
-  const styles: Record<string, string> = {
-    PENDING: "bg-orange-50 text-orange-600 border-orange-100",
-    CONFIRMED: "bg-blue-50 text-blue-600 border-blue-100",
-    PICKUP_ASSIGNED: "bg-sky-50 text-sky-700 border-sky-100",
-    OUT_FOR_PICKUP: "bg-cyan-50 text-cyan-700 border-cyan-100",
-    PICKED_UP: "bg-indigo-50 text-indigo-600 border-indigo-100",
-    DELIVERED_TO_SHOP: "bg-teal-50 text-teal-700 border-teal-100",
-    PROCESSING: "bg-violet-50 text-violet-700 border-violet-100",
-    READY_FOR_DELIVERY: "bg-green-50 text-green-600 border-green-100",
-    DELIVERY_ASSIGNED: "bg-lime-50 text-lime-700 border-lime-100",
-    OUT_FOR_DELIVERY: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    DONE: "bg-green-50 text-green-600 border-green-100",
-    DELIVERED: "bg-green-50 text-green-600 border-green-100",
-    CANCELLED: "bg-slate-50 text-slate-400 border-slate-200",
-  };
-
-  const normalized = mapStatusLabel((status || "").toUpperCase());
-  const Icon =
-    normalized === "DONE"
-      ? CheckCircle2
-      : normalized === "CANCELLED"
-        ? XCircle
-        : null;
-
-  return (
-    <span
-      className={`px-4 py-1.5 rounded-full text-[10px] font-black border uppercase tracking-widest flex items-center gap-1.5 ${styles[normalized] || "bg-slate-50 text-slate-500 border-slate-200"}`}
-    >
-      {Icon && <Icon size={12} />}
-      {normalized.replaceAll("_", " ")}
-    </span>
-  );
-};

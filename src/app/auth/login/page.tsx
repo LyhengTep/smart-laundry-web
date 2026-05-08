@@ -21,8 +21,8 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { ArrowRight, Lock, Mail, Wind } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm, UseFormSetValue } from "react-hook-form";
 import { z } from "zod";
 const roles: Record<string, RoleSelectorValues> = {
@@ -62,9 +62,19 @@ const detectDeviceType = () => {
 };
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Login />
+    </Suspense>
+  );
+}
+
+function Login() {
   const toastCtx = useContext(ToastContext);
   const [role, setRole] = useState<RoleKeys>("CUSTOMER");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const {
     register,
     handleSubmit,
@@ -109,36 +119,30 @@ export default function LoginPage() {
     onSuccess: async (value) => {
       console.log("value return from the server", value);
       setValue(value);
-      if (value.role === "DRIVER") {
-        try {
-          // const profile = await getDriverByUserId(value.id);
-          // setDriverProfile(profile);
-
-          const permission = await requestFirebaseNotificationPermission();
-          if (permission === "granted") {
-            const fcmToken = await getFcmToken();
-            console.log("Obtained FCM token:", fcmToken);
-            if (fcmToken) {
-              let res = await registerDeviceToken({
-                user_id: value.id,
-                driver_id: value?.driver?.id || null,
-                token: fcmToken,
-                device_type: detectDeviceType(),
-              });
-
-              console.log("Device token registered:", res);
-            }
+      try {
+        const permission = await requestFirebaseNotificationPermission();
+        if (permission === "granted") {
+          const fcmToken = await getFcmToken();
+          if (fcmToken) {
+            await registerDeviceToken({
+              user_id: value.id,
+              driver_id: value.role === "DRIVER" ? (value?.driver?.id ?? null) : null,
+              token: fcmToken,
+              device_type: detectDeviceType(),
+            });
           }
-        } catch (e) {
-          console.log("Failed to load/register driver profile token", e);
-          // setDriverProfile(null);
         }
-      } else {
-        // setDriverProfile(null);
+      } catch (e) {
+        console.log("Failed to register device token", e);
       }
 
       toastCtx.setIsVisible(true);
       setTimeout(() => {
+        if (redirect && redirect.startsWith("/")) {
+          router.replace(redirect);
+          return;
+        }
+
         if (value.role === "MERCHANT") {
           router.push("/businesses-admin");
           return;
@@ -177,7 +181,7 @@ export default function LoginPage() {
               <div className="bg-blue-600 p-2 rounded-xl text-white">
                 <Wind size={24} />
               </div>
-              <span className="text-2xl font-black text-slate-800 tracking-tight">
+              <span className="text-lg md:text-2xl font-black text-slate-800 tracking-tight">
                 {APP_NAME}
               </span>
             </Link>

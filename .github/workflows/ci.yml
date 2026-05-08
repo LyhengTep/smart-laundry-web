@@ -17,8 +17,35 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Write .env.production
+        run: |
+          echo "NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}" >> .env.production
+          echo "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" >> .env.production
+          echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}" >> .env.production
+          echo "NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}" >> .env.production
+          echo "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}" >> .env.production
+          echo "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}" >> .env.production
+          echo "NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}" >> .env.production
+          
       - name: Build Docker Image
         run: docker build -t lyheng/smart-laundry-web:${{ github.sha }} .
 
       - name: Push Docker Image
         run: docker push lyheng/smart-laundry-web:${{ github.sha }}
+
+      - name: Notify Success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELE_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELE_CHAT_ID }} \
+          -d text="✅ Web build succeeded for commit ${{ github.sha }} by ${{ github.actor }}. Image: lyheng/smart-laundry-web:${{ github.sha }}"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELE_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELE_CHAT_ID }} \
+          -d text="❌ Web build failed for commit ${{ github.sha }} by ${{ github.actor }}. Please check the GitHub Actions logs for details."

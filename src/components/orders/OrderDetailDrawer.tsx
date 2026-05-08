@@ -9,7 +9,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { UpdateOrderPricingRequest } from "@/types/order";
 import { OrderItem } from "./types";
 
@@ -47,6 +47,15 @@ export function OrderDetailDrawer({
     String(order?.discount ?? 0),
   );
   const lineItems = useMemo(() => order?.lineItems || [], [order]);
+
+  useEffect(() => {
+    setQuantities(
+      Object.fromEntries(
+        (order?.lineItems || []).map((item) => [item.id, String(item.quantity)]),
+      ),
+    );
+    setDiscountInput(String(order?.discount ?? 0));
+  }, [order?.lineItems, order?.discount]);
 
   const nextStatus = order ? SHOP_NEXT_STATUS[order.status] : undefined;
   const canUpdate =
@@ -300,6 +309,22 @@ export function OrderDetailDrawer({
                 {formatAmount(order.discount)}
               </span>
             </div>
+            {order.pickupFee != null && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Pickup Fee</span>
+                <span className="font-semibold text-slate-800">
+                  {formatAmount(order.pickupFee)}
+                </span>
+              </div>
+            )}
+            {order.deliveryFee != null && order.deliveryFee > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Delivery Fee</span>
+                <span className="font-semibold text-slate-800">
+                  {formatAmount(order.deliveryFee)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-base border-t border-slate-200 pt-2 mt-2">
               <span className="font-bold text-slate-900">Total</span>
               <span className="font-bold text-blue-700">

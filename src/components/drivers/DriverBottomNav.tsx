@@ -11,7 +11,7 @@ export default function DriverBottomNav({
   onChange,
 }: DriverBottomNavProps) {
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-20">
       <div className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 flex justify-between shadow-2xl shadow-black/50">
         <NavButton
           active={activeTab === "tasks"}
@@ -56,7 +56,9 @@ function NavButton({ active, icon, label, onClick }: NavButtonProps) {
     >
       {icon}
       {active && (
-        <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+        <span className="text-xs font-black uppercase tracking-widest">
+          {label}
+        </span>
       )}
     </button>
   );

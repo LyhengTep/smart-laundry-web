@@ -1,10 +1,27 @@
-import { getBusinesses } from "@/services/businessService";
-import { BusinessListResponse } from "@/types/business";
+import { getBusinessById, getBusinesses, getMyBusinesses } from "@/services/businessService";
+import { BusinessListResponse, BusinessResponse } from "@/types/business";
 import { useQuery } from "@tanstack/react-query";
 
-export function useBusinesses(params?: Record<string, string | number | boolean>) {
+export function useBusinesses(
+  params?: Record<string, string | number | boolean | undefined>,
+) {
   return useQuery<BusinessListResponse>({
     queryKey: ["businesses", params],
     queryFn: () => getBusinesses(params),
+  });
+}
+
+export function useMyBusinesses(params?: { page?: number; size?: number }) {
+  return useQuery<BusinessListResponse>({
+    queryKey: ["my-businesses", params],
+    queryFn: () => getMyBusinesses(params),
+  });
+}
+
+export function useBusiness(id: string) {
+  return useQuery<BusinessResponse>({
+    queryKey: ["business", id],
+    queryFn: () => getBusinessById(id),
+    enabled: !!id,
   });
 }

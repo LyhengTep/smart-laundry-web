@@ -4,6 +4,7 @@ import {
   CreateOrderRequest,
   LaundryOrderListResponse,
   OrderQueryParams,
+  OrderSearchResult,
   UpdateOrderPricingRequest,
   UpdateOrderStatusRequest,
 } from "@/types/order";
@@ -44,6 +45,15 @@ export const updateOrderPricing = async (
     },
   });
 
+  return res.data;
+};
+
+export const searchOrderByNo = async (
+  orderNo: string,
+): Promise<OrderSearchResult> => {
+  const res = await http.get<OrderSearchResult>(API_ROUTES.SEARCH_ORDER, {
+    params: { order_no: orderNo },
+  });
   return res.data;
 };
 

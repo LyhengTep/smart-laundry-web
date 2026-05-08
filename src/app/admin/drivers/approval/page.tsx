@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import { DriverDetailsPanel } from "@/components/DriverDetailsPanel";
 import { DriverTable } from "@/components/DriverTable";
@@ -15,18 +15,31 @@ import { DriverResponse } from "@/types/driver";
 import { toToastMessage } from "@/utils/toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { ShieldCheck } from "lucide-react";
+import { Search, ShieldCheck } from "lucide-react";
 
 export default function DriverApprovalPage() {
   const toastCtx = useContext(ToastContext);
   const [selectedDriver, setSelectedDriver] = useState<DriverResponse | null>(
     null,
   );
+  const [searchInput, setSearchInput] = useState("");
   const [driverParams, setDriverParams] = useState({
     page: 1,
     size: 10,
     status: "INACTIVE",
+    user_name: undefined as string | undefined,
   });
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDriverParams((p) => ({
+        ...p,
+        page: 1,
+        user_name: searchInput.trim() || undefined,
+      }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const queryClient = useQueryClient();
   const { mutate: approveDriver } = useMutation({
@@ -99,7 +112,7 @@ export default function DriverApprovalPage() {
 
   return (
     <div>
-      <header className="mb-10">
+      <header className="mb-8">
         <h1 className="text-3xl font-black text-slate-900">
           Driver Applications
         </h1>
@@ -108,14 +121,26 @@ export default function DriverApprovalPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">
-            Pending Review
-          </p>
-          <p className="text-3xl font-black text-slate-900 mt-1">
-            {data?.total}
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">
+              Pending Review
+            </p>
+            <p className="text-3xl font-black text-slate-900 mt-1">
+              {data?.total}
+            </p>
+          </div>
+        </div>
+        <div className="relative">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search by username…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-9 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition w-64"
+          />
         </div>
       </div>
 

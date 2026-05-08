@@ -1,3 +1,4 @@
+import { Business } from "./business";
 import { LaundryOrder } from "./order";
 
 export type DriverTaskTab = "tasks" | "history" | "profile";
@@ -6,14 +7,26 @@ export type DriverTaskType = "PICKUP" | "DELIVERY" | "CANCELLED";
 
 export interface DriverTaskRequest {
   id: string;
+  orderId?: string;
+  orderStatus?: string;
+  deliveryFeePaidBy?: "CUSTOMER" | "SHOP" | null;
   customerName: string;
   type: DriverTaskType;
   address: string;
   shopName: string;
   distance: string;
+  cost: number;
+  status: DriverAssignmentStatus;
   payout: number;
   lat?: number | null;
   lng?: number | null;
+  business?: Business | null;
+  order?: LaundryOrder | null;
+  role?: string;
+  pickupFee?: number;
+  deliveryFee?: number;
+  subtotal?: number;
+  total?: number;
 }
 
 // export interface DriverAssignment {
@@ -27,10 +40,19 @@ export type DriverAssignmentResponse = {
   id: string;
   role: "PICKUP" | "DELIVERY" | "CANCELLED";
   order: LaundryOrder | null;
+  status: DriverAssignmentStatus;
+  timeout?: number;
+  cost: number;
 };
 
+export type DriverAssignmentStatus =
+  | "ACCEPTED"
+  | "PICKED_UP"
+  | "DELIVERED"
+  | "REJECTED";
+
 export interface DriverTask extends DriverTaskRequest {
-  status: "IN_PROGRESS" | "COMPLETED";
+  // status: "IN_PROGRESS" | "COMPLETED";
 }
 
 export interface DriverStats {

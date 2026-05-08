@@ -4,21 +4,35 @@ import {
   BusinessListResponse,
   BusinessRequest,
   BusinessResponse,
+  BusinessReview,
+  BusinessReviewListResponse,
+  BusinessReviewRequest,
+  BusinessReviewSummary,
   BusinessServiceRequest,
   BusinessUpdateRequest,
   LaundryServiceResponse,
+  ShopStatusRequest,
+  ShopStatusResponse,
 } from "@/types/business";
 
 export const getBusinesses = async (
-  params?: Record<string, string | number | boolean>,
+  params?: Record<string, string | number | boolean | undefined>,
 ): Promise<BusinessListResponse> => {
   const res = await http.get<BusinessListResponse>(
     API_ROUTES.FETCH_BUSINESSES,
-    {
-      params,
-    },
+    { params },
   );
+  return res.data;
+};
 
+export const getMyBusinesses = async (params?: {
+  page?: number;
+  size?: number;
+}): Promise<BusinessListResponse> => {
+  const res = await http.get<BusinessListResponse>(
+    API_ROUTES.FETCH_MY_BUSINESSES,
+    { params },
+  );
   return res.data;
 };
 
@@ -65,6 +79,79 @@ export const createBusinessServices = async (
 export const deleteBusiness = async (business_id: string) => {
   const res = await http.delete(API_ROUTES.DELETE_BUSINESS(business_id));
   return res.data;
+};
+
+export const getBusinessRevenue = async (
+  businessId: string,
+): Promise<{ business_id: string; total_revenue: string; currency: string }> => {
+  const res = await http.get(API_ROUTES.GET_BUSINESS_REVENUE(businessId));
+  return res?.data?.data ?? res?.data;
+};
+
+export const updateBusinessStatus = async (
+  id: string,
+  status: "OPEN" | "CLOSED",
+): Promise<BusinessResponse> => {
+  const res = await http.patch<BusinessResponse>(
+    API_ROUTES.UPDATE_BUSINESS_STATUS(id),
+    { status },
+  );
+  return res.data;
+};
+
+export const updateShopStatus = async (
+  businessId: string,
+  data: ShopStatusRequest,
+): Promise<ShopStatusResponse> => {
+  const res = await http.patch<ShopStatusResponse>(
+    API_ROUTES.UPDATE_SHOP_STATUS(businessId),
+    data,
+  );
+  return res.data;
+};
+
+export const getBusinessReviewSummary = async (
+  businessId: string,
+): Promise<BusinessReviewSummary> => {
+  const res = await http.get<BusinessReviewSummary>(
+    API_ROUTES.GET_BUSINESS_REVIEW_SUMMARY(businessId),
+  );
+  return res.data;
+};
+
+export const getBusinessReviews = async (
+  businessId: string,
+): Promise<BusinessReviewListResponse> => {
+  const res = await http.get<BusinessReviewListResponse>(
+    API_ROUTES.GET_BUSINESS_REVIEWS(businessId),
+  );
+  return res.data;
+};
+
+export const createBusinessReview = async (
+  businessId: string,
+  data: BusinessReviewRequest,
+): Promise<void> => {
+  await http.post(API_ROUTES.CREATE_BUSINESS_REVIEW(businessId), data);
+};
+
+export const updateBusinessReview = async (
+  businessId: string,
+  reviewId: string,
+  data: BusinessReviewRequest,
+): Promise<BusinessReview> => {
+  const res = await http.patch<BusinessReview>(
+    API_ROUTES.UPDATE_BUSINESS_REVIEW(businessId, reviewId),
+    data,
+  );
+  return res.data;
+};
+
+export const handleBusinessDeactivation = async (
+  id: string,
+  action: "APPROVE" | "REJECT",
+): Promise<void> => {
+  await http.patch(API_ROUTES.BUSINESS_DEACTIVATION(id), { action });
 };
 
 export const updateBusiness = async (

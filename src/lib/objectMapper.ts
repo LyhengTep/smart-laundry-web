@@ -6,9 +6,12 @@ import {
 export const convertAssignmentToDriverTask = (
   assignment: DriverAssignmentResponse,
 ): DriverTaskRequest => {
-  let isPickup = assignment.order?.pickup_method == "PICKUP";
-  let task: DriverTaskRequest = {
+  const isPickup = assignment.order?.pickup_method == "PICKUP";
+  const task: DriverTaskRequest = {
     id: assignment.id,
+    orderId: assignment.order?.id,
+    orderStatus: assignment.order?.status,
+    status: assignment.status,
     customerName: assignment.order?.customer?.full_name || "Unknown Customer",
     type: assignment.role, // Assuming all tasks are pickups for simplicity
     address: assignment.order?.pickup_address || "Unknown Address",
@@ -21,9 +24,16 @@ export const convertAssignmentToDriverTask = (
     lng: isPickup
       ? assignment.order?.pickup_longitude || null
       : assignment.order?.delivery_longitude || null,
+    business: assignment.order?.business || null,
+    order: assignment?.order || null,
+    deliveryFeePaidBy: assignment.order?.delivery_fee_paid_by ?? null,
+    cost: assignment.cost,
+    role: assignment.role,
+    deliveryFee: assignment?.order?.delivery_fee || 0,
+    total: assignment?.order?.total || 0,
+    subtotal: assignment?.order?.subtotal || 0,
+    pickupFee: assignment?.order?.pickup_fee || 0,
   };
-
-  console.log("driver task map ", task);
 
   return task;
 };
