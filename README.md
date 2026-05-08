@@ -10,7 +10,7 @@ Built with **Next.js 16**, **TypeScript**, **TailwindCSS**, and **React Query**.
 
 | Tool | Minimum version |
 |------|----------------|
-| Node.js | 20.x |
+| Node.js | >=20.9.0 |
 | npm | 10.x |
 | Docker & Docker Compose | 24.x *(optional, for containerised run)* |
 
@@ -95,7 +95,7 @@ Copy `.env.example` to `.env.local` for local development. All variables prefixe
 | Variable | Description |
 |----------|-------------|
 | `NEXT_PUBLIC_API_BASE_URL` | Backend REST API base URL, including the `/api/v1` prefix |
-| `NEXT_PUBLIC_BASE_URL` | Public URL of this frontend (used for links and metadata) |
+| `NEXT_PUBLIC_IMAGE_BASE_URL` | Public URL of this for frontend to concate image |
 | `NEXT_PUBLIC_DRIVER_WS_URL` | WebSocket URL for real-time driver task notifications |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps API key (used on map/tracking pages) |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase project API key |
