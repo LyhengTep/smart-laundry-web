@@ -88,6 +88,25 @@ docker compose up --build
 
 ---
 
+## Makefile
+
+A `Makefile` is provided for common build tasks. Requires `make` and Docker.
+
+| Target | Description |
+|--------|-------------|
+| `make build-local` | Copy `.env.local` → `.env.production` then build a local Docker image tagged `smart-laundry-web:local` |
+
+### Usage
+
+```bash
+# Build a local Docker image using your current .env.local values
+make build-local
+```
+
+> This is useful for testing the production build locally before pushing to a registry. Make sure `.env.local` is populated before running.
+
+---
+
 ## Environment Variables
 
 Copy `.env.example` to `.env.local` for local development. All variables prefixed with `NEXT_PUBLIC_` are embedded into the browser bundle at build time.

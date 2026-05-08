@@ -2,19 +2,20 @@
 
 import CollectFromCustomerModal from "@/components/CollectFromCustomerModal";
 import CollectFromShopModal from "@/components/CollectFromShopModal";
-import { NotificationBell } from "@/components/NotificationBell";
 import DriverActiveTaskCard from "@/components/drivers/DriverActiveTaskCard";
 import DriverBottomNav from "@/components/drivers/DriverBottomNav";
 import DriverHistoryTab from "@/components/drivers/DriverHistoryTab";
 import DriverMissionDetail from "@/components/drivers/DriverMissionDetail";
 import DriverProfileTab from "@/components/drivers/DriverProfileTab";
 import DriverTaskRequestCard from "@/components/drivers/DriverTaskRequestCard";
+import { NotificationBell } from "@/components/NotificationBell";
 import PaymentAcceptanceModal from "@/components/PaymentAcceptanceModal";
 import { STORAGE_KEYS } from "@/config/common";
 import { ToastContext } from "@/contexts/ToastProvider";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { convertAssignmentToDriverTask } from "@/lib/objectMapper";
 import { clearAuthSession, logout } from "@/services/authService";
+import { registerDeviceToken } from "@/services/deviceTokenService";
 import { getDriverActiveAssignment } from "@/services/driverService";
 import {
   acceptDriverTask,
@@ -24,6 +25,10 @@ import {
   markAssignmentDelivered,
   markAssignmentPickedUp,
 } from "@/services/driverTaskService";
+import {
+  getFcmToken,
+  requestFirebaseNotificationPermission,
+} from "@/services/firebaseMessaging";
 import { UserAuthResponse } from "@/types/auth";
 import {
   DriverAssignmentResponse,
@@ -58,7 +63,50 @@ export default function DriverTasksPage() {
   const { value: authUser, setValue: setAuthUser } =
     useLocalStorage<UserAuthResponse | null>(STORAGE_KEYS.AUTH_USER, null);
 
-  console.log("Authuser is ", authUser);
+  useEffect(() => {
+    if (!authUser?.driver?.id) return;
+
+    console.log("Registering device token for driver", authUser.driver.id);
+    const registerToken = async () => {
+      try {
+        const permission = await requestFirebaseNotificationPermission();
+        console.log("Registering device token for driver", permission);
+        if (permission !== "granted") return;
+        const token = await getFcmToken();
+
+        console.log("token is ", token);
+        if (!token) return;
+        let res = await registerDeviceToken({
+          user_id: authUser.id,
+          driver_id: authUser.driver?.id ?? null,
+          token,
+          device_type: /iphone|ipad|ipod/.test(
+            navigator.userAgent.toLowerCase(),
+          )
+            ? "ios"
+            : /android/.test(navigator.userAgent.toLowerCase())
+              ? "android"
+              : "web",
+        });
+        console.log("Device token registered successfully:", res);
+      } catch (e) {
+        console.error("Failed to register device token on driver online:", e);
+      }
+    };
+    void registerToken();
+  }, [authUser?.driver?.id, authUser?.id]);
+
+  useEffect(() => {
+    console.log(
+      "DriverTasksPage mounted, registering foreground message handler",
+    );
+
+    let test = async () => {
+      const permission = await requestFirebaseNotificationPermission();
+      console.log("Foreground message permission:", permission);
+    };
+    void test();
+  }, []);
   const wsUrl = useMemo(
     () => getDriverTaskWsUrl(authUser?.driver?.id),
     [authUser?.driver?.id],

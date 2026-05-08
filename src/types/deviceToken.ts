@@ -2,8 +2,8 @@ export type DeviceType = "ios" | "android" | "web" | string;
 
 export interface DeviceToken {
   id: number;
-  user_id: number | string | null;
-  driver_id: number | string | null;
+  user_id: string;
+  driver_id: string | null;
   token: string;
   device_type: DeviceType;
   created_at: string;
@@ -11,8 +11,8 @@ export interface DeviceToken {
 }
 
 export interface DeviceTokenPayload {
-  user_id?: number | string | null;
-  driver_id?: number | string | null;
+  user_id: string;
+  driver_id: string | null;
   token: string;
   device_type: DeviceType;
 }
