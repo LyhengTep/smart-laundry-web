@@ -228,47 +228,14 @@ export default function OrderManagementPage() {
       orderId: string;
       payload: UpdateOrderPricingRequest;
     }) => updateOrderPricing(orderId, payload),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (updatedOrder, variables) => {
       await queryClient.invalidateQueries({
         queryKey: ["orders"],
         refetchType: "active",
       });
       setSelectedOrder((prev) => {
         if (!prev || prev.orderId !== variables.orderId) return prev;
-
-        const quantityMap = new Map(
-          variables.payload.items.map((item) => [
-            item.order_item_id,
-            item.quantity,
-          ]),
-        );
-        const updatedLineItems = (prev.lineItems || []).map((item) => {
-          const nextQuantity = quantityMap.get(item.id);
-          if (typeof nextQuantity !== "number") return item;
-          return {
-            ...item,
-            quantity: nextQuantity,
-            subTotal: item.unitPrice * nextQuantity,
-          };
-        });
-        const updatedSubtotal = updatedLineItems.reduce(
-          (sum, item) => sum + item.subTotal,
-          0,
-        );
-        const updatedDiscount = variables.payload.discount ?? 0;
-
-        return {
-          ...prev,
-          lineItems: updatedLineItems,
-          subtotal: updatedSubtotal,
-          discount: updatedDiscount,
-          total: Math.max(updatedSubtotal - updatedDiscount, 0),
-          weight:
-            updatedLineItems.length > 0
-              ? `${updatedLineItems[0].quantity} ${updatedLineItems[0].measureType}`
-              : prev.weight,
-          price: `$${Math.max(updatedSubtotal - updatedDiscount, 0).toFixed(2)}`,
-        };
+        return toOrderCard(updatedOrder as LaundryOrder);
       });
       toastCtx?.setToast?.({
         error: false,

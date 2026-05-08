@@ -9,7 +9,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { UpdateOrderPricingRequest } from "@/types/order";
 import { OrderItem } from "./types";
 
@@ -47,6 +47,15 @@ export function OrderDetailDrawer({
     String(order?.discount ?? 0),
   );
   const lineItems = useMemo(() => order?.lineItems || [], [order]);
+
+  useEffect(() => {
+    setQuantities(
+      Object.fromEntries(
+        (order?.lineItems || []).map((item) => [item.id, String(item.quantity)]),
+      ),
+    );
+    setDiscountInput(String(order?.discount ?? 0));
+  }, [order?.lineItems, order?.discount]);
 
   const nextStatus = order ? SHOP_NEXT_STATUS[order.status] : undefined;
   const canUpdate =
