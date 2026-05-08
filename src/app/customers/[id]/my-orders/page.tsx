@@ -8,11 +8,6 @@ import { ToastContext } from "@/contexts/ToastProvider";
 import { STORAGE_KEYS } from "@/config/common";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { useOrders } from "@/hooks/orders/orderHook";
-import { registerDeviceToken } from "@/services/deviceTokenService";
-import {
-  getFcmToken,
-  requestFirebaseNotificationPermission,
-} from "@/services/firebaseMessaging";
 import { updateOrderStatus } from "@/services/orderService";
 import { UserAuthResponse } from "@/types/auth";
 import { LaundryOrder } from "@/types/order";
@@ -74,33 +69,6 @@ export default function MyOrdersPage() {
       router.replace(`/customers/${authUser.id}/my-orders`);
     }
   }, [authUser, customerId, router]);
-
-  useEffect(() => {
-    if (!authUser?.id) return;
-    const registerToken = async () => {
-      try {
-        const permission = await requestFirebaseNotificationPermission();
-        if (permission !== "granted") return;
-        const token = await getFcmToken();
-        if (!token) return;
-        const ua = navigator.userAgent.toLowerCase();
-        const device_type = /iphone|ipad|ipod/.test(ua)
-          ? "ios"
-          : /android/.test(ua)
-            ? "android"
-            : "web";
-        await registerDeviceToken({
-          user_id: authUser.id,
-          driver_id: null,
-          token,
-          device_type,
-        });
-      } catch (e) {
-        console.error("Failed to register device token:", e);
-      }
-    };
-    void registerToken();
-  }, [authUser?.id]);
 
   const queryParams = useMemo(
     () => ({

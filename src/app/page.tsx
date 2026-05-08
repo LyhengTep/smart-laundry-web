@@ -11,6 +11,11 @@ import { STORAGE_KEYS } from "@/config/common";
 import { useBusinesses } from "@/hooks/businesses/businessHook";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { clearAuthSession, logout } from "@/services/authService";
+import { registerDeviceToken } from "@/services/deviceTokenService";
+import {
+  getFcmToken,
+  requestFirebaseNotificationPermission,
+} from "@/services/firebaseMessaging";
 import { searchOrderByNo } from "@/services/orderService";
 import { UserAuthResponse } from "@/types/auth";
 import { Business } from "@/types/business";
@@ -20,7 +25,7 @@ import { toTimeMinutes } from "@/utils/date";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const isAvailableBusiness = (status?: string) => {
   const normalized = (status || "").toUpperCase();
@@ -63,6 +68,33 @@ export default function Home() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (!value?.id) return;
+    const registerToken = async () => {
+      try {
+        const permission = await requestFirebaseNotificationPermission();
+        if (permission !== "granted") return;
+        const token = await getFcmToken();
+        if (!token) return;
+        const ua = navigator.userAgent.toLowerCase();
+        const device_type = /iphone|ipad|ipod/.test(ua)
+          ? "ios"
+          : /android/.test(ua)
+            ? "android"
+            : "web";
+        await registerDeviceToken({
+          user_id: value.id,
+          driver_id: null,
+          token,
+          device_type,
+        });
+      } catch (e) {
+        console.error("Failed to register device token:", e);
+      }
+    };
+    void registerToken();
+  }, [value?.id]);
 
   const shops = useMemo(() => {
     const available = (data?.items || []).filter((business) =>
