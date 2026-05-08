@@ -239,7 +239,7 @@ const ShopProfilePage = () => {
 
     if (values.image) {
       const uploaded = await uploadCover.mutateAsync(values.image);
-      coverUrl = uploaded.url;
+      coverUrl = uploaded.path;
     }
 
     const selectedServices: BusinessServiceUpdateRequest[] = values.services
