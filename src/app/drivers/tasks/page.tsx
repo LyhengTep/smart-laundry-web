@@ -15,7 +15,12 @@ import { ToastContext } from "@/contexts/ToastProvider";
 import { useLocalStorage } from "@/hooks/localStorage";
 import { convertAssignmentToDriverTask } from "@/lib/objectMapper";
 import { clearAuthSession, logout } from "@/services/authService";
+import { registerDeviceToken } from "@/services/deviceTokenService";
 import { getDriverActiveAssignment } from "@/services/driverService";
+import {
+  getFcmToken,
+  requestFirebaseNotificationPermission,
+} from "@/services/firebaseMessaging";
 import {
   acceptDriverTask,
   confirmPaymentByDriver,
@@ -58,7 +63,32 @@ export default function DriverTasksPage() {
   const { value: authUser, setValue: setAuthUser } =
     useLocalStorage<UserAuthResponse | null>(STORAGE_KEYS.AUTH_USER, null);
 
-  console.log("Authuser is ", authUser);
+  useEffect(() => {
+    if (!authUser?.driver?.id) return;
+    const registerToken = async () => {
+      try {
+        const permission = await requestFirebaseNotificationPermission();
+        if (permission !== "granted") return;
+        const token = await getFcmToken();
+        if (!token) return;
+        await registerDeviceToken({
+          user_id: authUser.id,
+          driver_id: authUser.driver?.id ?? null,
+          token,
+          device_type:
+            /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())
+              ? "ios"
+              : /android/.test(navigator.userAgent.toLowerCase())
+                ? "android"
+                : "web",
+        });
+      } catch (e) {
+        console.error("Failed to register device token on driver online:", e);
+      }
+    };
+    void registerToken();
+  }, [authUser?.driver?.id, authUser?.id]);
+
   const wsUrl = useMemo(
     () => getDriverTaskWsUrl(authUser?.driver?.id),
     [authUser?.driver?.id],
