@@ -30,21 +30,16 @@ export default function FirebaseNotificationInit() {
     null,
   );
 
-  // Request permission as soon as the page loads — no auth required.
   useEffect(() => {
-    void requestFirebaseNotificationPermission();
-  }, []);
-
-  // Register token and subscribe to foreground messages when auth is ready.
-  useEffect(() => {
-    if (!authUser?.id) return;
-
     let unsubscribe: null | (() => void) = null;
 
     const setup = async () => {
       try {
+        // Always request permission — works for both guest and logged-in users.
         const permission = await requestFirebaseNotificationPermission();
-        if (permission !== "granted") return;
+
+        // Token registration and foreground messages require a logged-in user.
+        if (permission !== "granted" || !authUser?.id) return;
 
         const token = await getFcmToken();
         if (token) {
